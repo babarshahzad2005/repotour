@@ -49,9 +49,13 @@ def main(
         bool,
         typer.Option("--strict", help="Exit with code 3 if any warnings were produced."),
     ] = False,
+    no_cache: Annotated[
+        bool,
+        typer.Option("--no-cache", help="Neither read nor write the analysis cache."),
+    ] = False,
 ) -> None:
     try:
-        result = build_tour(path, CliOverrides(since=since))
+        result = build_tour(path, CliOverrides(since=since), use_cache=not no_cache)
         target = out if out is not None else result.root / "TOUR.md"
         write_tour(target, render_markdown(result.tour), force=force)
     except RepotourError as exc:
