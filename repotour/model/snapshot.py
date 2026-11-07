@@ -6,7 +6,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import MappingProxyType
-from typing import Literal
+from typing import Any, Literal
 
 from repotour.config import Config
 from repotour.model.history import CommitRecord
@@ -44,10 +44,18 @@ class RepoSnapshot:
     history_source: Callable[[], tuple[CommitRecord, ...]] = field(
         default=lambda: (), compare=False, repr=False
     )
+    # (adapter, path) -> ParseResult; shared and cached. None: parse directly.
+    parse_source: Callable[[Any, str], Any] | None = field(default=None, compare=False, repr=False)
 
     def read_bytes(self, path: str) -> bytes:
         """Committed content of a tracked file at `head_commit`."""
         return self.contents[path]
+
+    def parse(self, adapter: Any, path: str) -> Any:
+        """The adapter's ParseResult for a tracked file, parsed at most once."""
+        if self.parse_source is None:
+            return adapter.parse(self.read_bytes(path))
+        return self.parse_source(adapter, path)
 
     def history(self) -> tuple[CommitRecord, ...]:
         """History reachable from `head_commit`, merges excluded, newest first.

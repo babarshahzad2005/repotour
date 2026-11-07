@@ -74,7 +74,7 @@ def _parse_all(
 ) -> dict[str, tuple[RawImport, ...]]:
     parsed: dict[str, tuple[RawImport, ...]] = {}
     for path in paths:
-        result = adapter.parse(snapshot.read_bytes(path))
+        result = snapshot.parse(adapter, path)
         if result.has_error:
             warnings.append(f"Could not parse {path}; left out of the dependency graph")
             continue

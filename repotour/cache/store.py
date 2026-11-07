@@ -19,7 +19,7 @@ from repotour.model.tour import Evidence
 
 CACHE_DIR_NAME = "repotour-cache"
 CACHE_FILE_NAME = "cache.sqlite3"
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS analyzer_results (
@@ -33,6 +33,13 @@ CREATE TABLE IF NOT EXISTS analyzer_results (
 CREATE TABLE IF NOT EXISTS history (
     tip TEXT PRIMARY KEY,
     payload BLOB NOT NULL
+);
+CREATE TABLE IF NOT EXISTS parse_results (
+    content_hash TEXT NOT NULL,
+    language TEXT NOT NULL,
+    version INTEGER NOT NULL,
+    payload TEXT NOT NULL,
+    PRIMARY KEY (content_hash, language, version)
 );
 """
 
@@ -102,7 +109,28 @@ class CacheStore:
             self._db.execute("DELETE FROM history")
             self._db.execute("INSERT INTO history VALUES (?, ?)", (tip, payload))
 
+    def get_parse(self, content_hash: str, language: str, version: int) -> str | None:
+        try:
+            row = self._db.execute(
+                "SELECT payload FROM parse_results "
+                "WHERE content_hash = ? AND language = ? AND version = ?",
+                (content_hash, language, version),
+            ).fetchone()
+        except sqlite3.DatabaseError:
+            return None
+        return None if row is None else str(row[0])
+
+    def put_parse(self, content_hash: str, language: str, version: int, payload: str) -> None:
+        """Queued in the current transaction; committed on close."""
+        with contextlib.suppress(sqlite3.DatabaseError):
+            self._db.execute(
+                "INSERT OR REPLACE INTO parse_results VALUES (?, ?, ?, ?)",
+                (content_hash, language, version, payload),
+            )
+
     def close(self) -> None:
+        with contextlib.suppress(sqlite3.DatabaseError):
+            self._db.commit()
         self._db.close()
 
     def _open(self) -> sqlite3.Connection:
@@ -120,6 +148,7 @@ class CacheStore:
             if version != SCHEMA_VERSION:
                 db.execute("DROP TABLE IF EXISTS analyzer_results")
                 db.execute("DROP TABLE IF EXISTS history")
+                db.execute("DROP TABLE IF EXISTS parse_results")
                 db.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
             db.executescript(_SCHEMA)
             db.commit()

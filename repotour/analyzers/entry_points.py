@@ -58,7 +58,7 @@ class EntryPointsAnalyzer:
                 continue
             parsed = {}
             for path in paths:
-                result = adapter.parse(snapshot.read_bytes(path))
+                result = snapshot.parse(adapter, path)
                 if result.has_error:
                     continue
                 parsed[path] = result

@@ -11,7 +11,7 @@ is lazy, so a fully cached commit is rendered without reading the tree.
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from functools import cache
 from pathlib import Path
 from typing import Any
@@ -24,6 +24,7 @@ from repotour.analyzers.history import HistoryAnalyzer
 from repotour.analyzers.overview import OverviewAnalyzer
 from repotour.analyzers.ownership import OwnershipAnalyzer
 from repotour.cache.history import load_history
+from repotour.cache.parse import ParseCache
 from repotour.cache.store import CacheStore, ResultKey, cache_path
 from repotour.config import CliOverrides, Config, load_config
 from repotour.git import reader
@@ -108,12 +109,13 @@ def build_tour(
 
     @cache
     def snapshot() -> RepoSnapshot:
-        return scan(
+        scanned = scan(
             repo.root,
             repo.head_commit,
             config,
             history_source=lambda: load_history(repo.root, repo.head_commit, store),
         )
+        return replace(scanned, parse_source=ParseCache(scanned, store).parse)
 
     try:
         result_cache = ResultCache(store, repo.head_commit, config.config_hash()) if store else None
