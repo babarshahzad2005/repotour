@@ -37,7 +37,7 @@ def test_claim_without_evidence_is_flagged() -> None:
 def test_nested_claim_without_evidence_is_flagged() -> None:
     bare = TextClaim(text="nested", evidence=())
     group = Group(members=(bare,), evidence=(Evidence(kind="file", ref="a.py"),))
-    tour = Tour(meta=META, entry_points=(group,))
+    tour = Tour(meta=META, summaries=(group,))
 
     assert find_unevidenced_claims(tour) == [bare]
 

@@ -19,6 +19,7 @@ from typing import Any
 from repotour import __version__
 from repotour.analyzers.base import Analyzer, AnalyzerResult
 from repotour.analyzers.dependencies import DependenciesAnalyzer
+from repotour.analyzers.entry_points import EntryPointsAnalyzer
 from repotour.analyzers.history import HistoryAnalyzer
 from repotour.analyzers.overview import OverviewAnalyzer
 from repotour.analyzers.ownership import OwnershipAnalyzer
@@ -30,6 +31,7 @@ from repotour.model.serde import from_data
 from repotour.model.snapshot import RepoSnapshot
 from repotour.model.tour import (
     DependencyGraphSection,
+    EntryPointsSection,
     HotspotsSection,
     Meta,
     Overview,
@@ -49,11 +51,18 @@ SECTIONS: dict[str, tuple[str, type]] = {
     "history": ("hotspots", HotspotsSection),
     "ownership": ("ownership", OwnershipSection),
     "dependencies": ("dependency_graph", DependencyGraphSection),
+    "entry_points": ("entry_points", EntryPointsSection),
 }
 
 
 def default_analyzers() -> list[Analyzer]:
-    return [OverviewAnalyzer(), HistoryAnalyzer(), OwnershipAnalyzer(), DependenciesAnalyzer()]
+    return [
+        OverviewAnalyzer(),
+        EntryPointsAnalyzer(),
+        HistoryAnalyzer(),
+        OwnershipAnalyzer(),
+        DependenciesAnalyzer(),
+    ]
 
 
 @dataclass(frozen=True)

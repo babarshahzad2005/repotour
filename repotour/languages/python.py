@@ -9,18 +9,52 @@ submodule `a.b` wins over `a/__init__.py`.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+import tomllib
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 
 import tree_sitter_python
 from tree_sitter import Language, Node, Parser, Query, QueryCursor
 
-from repotour.languages.base import ParseResult, RawImport
+from repotour.languages.base import DeclaredEntry, ParseResult, RawEntry, RawImport
+from repotour.model.tour import Evidence
 
 _LANGUAGE = Language(tree_sitter_python.language())
 _STATEMENTS = Query(_LANGUAGE, "(import_statement) @s (import_from_statement) @s")
+_PATTERNS = Query(
+    _LANGUAGE,
+    """
+    (call function: (_) @call)
+    (decorator (attribute) @decorator)
+    (if_statement condition: (comparison_operator) @guard)
+    (assignment left: (identifier) @assigned)
+    """,
+)
 _PROJECT_FILES = ("pyproject.toml", "setup.py", "setup.cfg")
+
+# Calls and decorators that make a file an execution entry point.
+_CLI = {
+    "typer.Typer": "Typer",
+    "Typer": "Typer",
+    "click.command": "Click",
+    "click.group": "Click",
+    "argparse.ArgumentParser": "argparse",
+    "ArgumentParser": "argparse",
+    "fire.Fire": "Fire",
+}
+_WEB_APPS = {
+    "Flask": "Flask",
+    "flask.Flask": "Flask",
+    "FastAPI": "FastAPI",
+    "fastapi.FastAPI": "FastAPI",
+    "Starlette": "Starlette",
+    "Sanic": "Sanic",
+    "Quart": "Quart",
+}
+_SERVERS = frozenset(
+    {"uvicorn.run", "hypercorn.run", "app.run", "web.run_app", "waitress.serve", "make_server"}
+)
 
 
 @dataclass(frozen=True)
@@ -51,7 +85,35 @@ class PythonAdapter:
                     continue
                 names = tuple(_dotted(n) for n in node.children_by_field_name("name"))
                 imports.append(RawImport(module=_text(module), names=names, line=line))
-        return ParseResult(imports=tuple(imports), has_error=tree.root_node.has_error)
+        return ParseResult(
+            imports=tuple(imports),
+            has_error=tree.root_node.has_error,
+            entries=_entries(tree.root_node),
+        )
+
+    def declared_entries(
+        self,
+        paths: Sequence[str],
+        all_paths: Sequence[str],
+        read: Callable[[str], str],
+        index: PythonIndex,
+    ) -> list[DeclaredEntry]:
+        declared = [
+            DeclaredEntry(
+                path=path,
+                kind="public surface",
+                description=f"top-level package `{PurePosixPath(path).parent.name}`",
+                evidence=Evidence(kind="file", ref=path, detail="package root"),
+            )
+            for path in paths
+            if _is_top_level_package(path, index)
+        ]
+        declared.extend(
+            _main_module_entry(path) for path in paths if PurePosixPath(path).name == "__main__.py"
+        )
+        for manifest in sorted(p for p in all_paths if PurePosixPath(p).name == "pyproject.toml"):
+            declared.extend(_console_scripts(manifest, read(manifest), index))
+        return declared
 
     def build_index(self, paths: Sequence[str], all_paths: Sequence[str]) -> PythonIndex:
         roots = {""}
@@ -133,3 +195,93 @@ def _dotted(node: Node) -> str:
 
 def _text(node: Node) -> str:
     return (node.text or b"").decode("utf-8", "replace")
+
+
+def _entries(root: Node) -> tuple[RawEntry, ...]:
+    found: list[tuple[int, str]] = []
+    for name, nodes in QueryCursor(_PATTERNS).captures(root).items():
+        for node in nodes:
+            line = node.start_point[0] + 1
+            text = _text(node)
+            description = None
+            if name in ("call", "decorator"):
+                if text in _CLI:
+                    description = f"defines a CLI ({_CLI[text]})"
+                elif text in _WEB_APPS:
+                    description = f"defines a web app ({_WEB_APPS[text]})"
+                elif text in _SERVERS:
+                    description = "starts a server"
+            elif name == "guard":
+                compact = text.replace(" ", "").replace("'", '"')
+                if compact in ('__name__=="__main__"', '"__main__"==__name__'):
+                    description = "runs as a script"
+            elif name == "assigned" and text == "urlpatterns":
+                description = "defines URL routes (Django)"
+            if description is not None:
+                found.append((line, description))
+    entries: list[RawEntry] = []
+    seen: set[str] = set()
+    for line, description in sorted(found):
+        if description not in seen:
+            seen.add(description)
+            entries.append(RawEntry(description=description, line=line))
+    return tuple(entries)
+
+
+def _is_top_level_package(path: str, index: PythonIndex) -> bool:
+    pure = PurePosixPath(path)
+    if pure.stem != "__init__" or pure.parent == PurePosixPath("."):
+        return False
+    if not pure.parent.name.isidentifier():
+        return False
+    parent_init = pure.parent.parent / "__init__.py"
+    return str(parent_init) not in index.paths
+
+
+def _console_scripts(manifest: str, text: str, index: PythonIndex) -> list[DeclaredEntry]:
+    try:
+        data = tomllib.loads(text)
+    except tomllib.TOMLDecodeError:
+        return []
+    project = data.get("project")
+    tool = data.get("tool")
+    sources = [
+        ("[project.scripts]", project.get("scripts") if isinstance(project, dict) else None),
+        (
+            "[tool.poetry.scripts]",
+            tool.get("poetry", {}).get("scripts") if isinstance(tool, dict) else None,
+        ),
+    ]
+    declared = []
+    for table, scripts in sources:
+        if not isinstance(scripts, dict):
+            continue
+        for name, target in sorted(scripts.items()):
+            if not isinstance(target, str):
+                continue
+            module = target.split(":", 1)[0].strip()
+            path = index.modules.get(module)
+            if path is None:
+                continue
+            declared.append(
+                DeclaredEntry(
+                    path=path,
+                    kind="execution",
+                    description=f"console script `{name}`",
+                    evidence=Evidence(
+                        kind="file", ref=manifest, detail=f"{table} {name} = {target}"
+                    ),
+                )
+            )
+    return declared
+
+
+def _main_module_entry(path: str) -> DeclaredEntry:
+    package = PurePosixPath(path).parent
+    dotted = _module_name(f"{package}/__init__.py", "") or package.name
+    return DeclaredEntry(
+        path=path,
+        kind="execution",
+        description=f"runs with `python -m {dotted}`",
+        evidence=Evidence(kind="file", ref=path, detail="package __main__ module"),
+    )

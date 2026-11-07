@@ -234,11 +234,27 @@ class DependencyGraphSection:
     external: ExternalImports | None = None
 
 
+@dataclass(frozen=True, kw_only=True)
+class EntryPoint(Claim):
+    """A file where a reader can enter the codebase (see the glossary)."""
+
+    path: str
+    kind: str  # "execution" or "public surface"
+    description: str  # e.g. "defines a CLI (Typer); runs as a script"
+    pinned: bool = False
+
+
+@dataclass(frozen=True)
+class EntryPointsSection:
+    entries: tuple[EntryPoint, ...] = ()  # pinned first, then by path, within each kind
+    omitted: int = 0  # entries beyond the per-kind cap
+
+
 @dataclass(frozen=True)
 class Tour:
     meta: Meta
     overview: Overview | None = None
-    entry_points: tuple[Claim, ...] = ()
+    entry_points: EntryPointsSection | None = None
     reading_order: tuple[Claim, ...] = ()
     hotspots: HotspotsSection | None = None
     ownership: OwnershipSection | None = None

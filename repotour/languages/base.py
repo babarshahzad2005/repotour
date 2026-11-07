@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Any, Protocol
+
+from repotour.model.tour import Evidence
 
 
 @dataclass(frozen=True)
@@ -17,9 +19,28 @@ class RawImport:
 
 
 @dataclass(frozen=True)
+class RawEntry:
+    """A code pattern that makes a file an execution entry point."""
+
+    description: str  # e.g. "defines a CLI (Typer)"
+    line: int  # 1-based
+
+
+@dataclass(frozen=True)
 class ParseResult:
     imports: tuple[RawImport, ...]
     has_error: bool
+    entries: tuple[RawEntry, ...] = ()
+
+
+@dataclass(frozen=True)
+class DeclaredEntry:
+    """An entry point declared outside the file itself (e.g. a manifest)."""
+
+    path: str
+    kind: str  # "execution" or "public surface"
+    description: str
+    evidence: Evidence
 
 
 class LanguageAdapter(Protocol):
@@ -44,4 +65,11 @@ class LanguageAdapter(Protocol):
 
     def external_name(self, raw: RawImport) -> str:
         """A short name for an external import, for counting (e.g. "os")."""
+        ...
+
+    def declared_entries(
+        self, paths: Sequence[str], all_paths: Sequence[str], read: Callable[[str], str], index: Any
+    ) -> list[DeclaredEntry]:
+        """Entry points this language declares outside code patterns: public
+        surfaces and manifest-declared commands."""
         ...
