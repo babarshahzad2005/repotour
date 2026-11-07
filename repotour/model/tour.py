@@ -97,6 +97,22 @@ class Command(Claim):
     command: str
 
 
+@dataclass(frozen=True, kw_only=True)
+class DirectoryPurpose(Claim):
+    """What a top-level directory is for, in one line."""
+
+    path: str
+    purpose: str
+
+
+@dataclass(frozen=True, kw_only=True)
+class Note(Claim):
+    """A maintainer's hand-written note from `.repotour.yml`."""
+
+    path: str
+    text: str
+
+
 @dataclass(frozen=True)
 class Overview:
     size: Size
@@ -104,6 +120,8 @@ class Overview:
     project_types: tuple[ProjectType, ...] = ()  # empty means "unknown"
     packages: tuple[Package, ...] = ()
     commands: tuple[Command, ...] = ()
+    directories: tuple[DirectoryPurpose, ...] = ()
+    notes: tuple[Note, ...] = ()
     excluded: tuple[ExcludedFiles, ...] = ()
     submodules: tuple[Submodule, ...] = ()
 
