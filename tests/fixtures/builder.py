@@ -64,15 +64,25 @@ class FixtureRepo:
         self._git("add", "--all")
         for path, sha in (gitlinks or {}).items():
             self._git("update-index", "--add", "--cacheinfo", f"160000,{sha},{path}")
-        env = {
-            "GIT_AUTHOR_NAME": author.name,
-            "GIT_AUTHOR_EMAIL": author.email,
-            "GIT_AUTHOR_DATE": date,
-            "GIT_COMMITTER_NAME": author.name,
-            "GIT_COMMITTER_EMAIL": author.email,
-            "GIT_COMMITTER_DATE": date,
-        }
-        self._git("commit", "--quiet", "--allow-empty", "-m", message, extra_env=env)
+        self._git(
+            "commit", "--quiet", "--allow-empty", "-m", message, extra_env=_identity(author, date)
+        )
+        return self._git("rev-parse", "HEAD").strip()
+
+    def branch(self, name: str) -> None:
+        """Create a branch at HEAD and switch to it."""
+        self._git("switch", "--quiet", "-c", name)
+
+    def switch(self, name: str) -> None:
+        self._git("switch", "--quiet", name)
+
+    def merge(
+        self, name: str, message: str, *, author: Author = DEFAULT_AUTHOR, date: str = DEFAULT_DATE
+    ) -> str:
+        """Merge branch `name` into the current branch with a merge commit."""
+        self._git(
+            "merge", "--quiet", "--no-ff", "-m", message, name, extra_env=_identity(author, date)
+        )
         return self._git("rev-parse", "HEAD").strip()
 
     def shallow_clone(self, name: str, depth: int = 1) -> FixtureRepo:
@@ -101,3 +111,14 @@ class FixtureRepo:
             check=True,
         )
         return result.stdout
+
+
+def _identity(author: Author, date: str) -> dict[str, str]:
+    return {
+        "GIT_AUTHOR_NAME": author.name,
+        "GIT_AUTHOR_EMAIL": author.email,
+        "GIT_AUTHOR_DATE": date,
+        "GIT_COMMITTER_NAME": author.name,
+        "GIT_COMMITTER_EMAIL": author.email,
+        "GIT_COMMITTER_DATE": date,
+    }

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+from functools import cache
 from pathlib import Path
 from types import MappingProxyType
 
@@ -44,7 +45,9 @@ def scan(root: Path, head_commit: str, config: Config) -> RepoSnapshot:
         config=config,
         submodules=listing.submodules,
         warnings=tuple(warnings),
+        head_timestamp=reader.commit_timestamp(root, head_commit),
         contents=MappingProxyType(contents),
+        history_source=cache(lambda: reader.read_history(root, head_commit)),
     )
 
 

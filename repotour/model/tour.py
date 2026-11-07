@@ -134,13 +134,30 @@ class Overview:
     submodules: tuple[Submodule, ...] = ()
 
 
+@dataclass(frozen=True, kw_only=True)
+class Hotspot(Claim):
+    """A file ranked by how many commits changed it within the hotspot window."""
+
+    path: str
+    commits: int
+
+
+@dataclass(frozen=True)
+class HotspotsSection:
+    since: str  # the window as configured, e.g. "6m"
+    window: str  # the same, for people, e.g. "6 months"
+    start: str  # first day of the window, ISO date (UTC)
+    end: str  # HEAD's commit date, ISO date (UTC)
+    files: tuple[Hotspot, ...] = ()
+
+
 @dataclass(frozen=True)
 class Tour:
     meta: Meta
     overview: Overview | None = None
     entry_points: tuple[Claim, ...] = ()
     reading_order: tuple[Claim, ...] = ()
-    hotspots: tuple[Claim, ...] = ()
+    hotspots: HotspotsSection | None = None
     ownership: tuple[Claim, ...] = ()
     dependency_graph: tuple[Claim, ...] = ()
     summaries: tuple[Claim, ...] = ()

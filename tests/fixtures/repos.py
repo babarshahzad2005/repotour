@@ -141,3 +141,59 @@ def showcase(parent: Path) -> FixtureRepo:
         gitlinks={"external/theme": "2222222222222222222222222222222222222222"},
     )
     return repo
+
+
+ADA = Author("Ada Lovelace", "ada@example.com")
+GRACE = Author("Grace Hopper", "grace@example.com")
+LINUS = Author("Linus Ops", "ops@example.com")
+
+
+def history(parent: Path) -> FixtureRepo:
+    """A year of scripted history: hot files, cold files, a merge, a deletion."""
+    repo = FixtureRepo.create(parent, "history")
+    repo.commit(
+        "Start",
+        {
+            "README.md": "# history\n",
+            "app/core.py": "v = 0\n",
+            "app/util.py": "u = 0\n",
+            "app/old.py": "old = 0\n",
+            "package-lock.json": "{}\n",
+            "logo.png": b"\x89PNG\r\n\x1a\n\x00\x00",
+        },
+        author=ADA,
+        date="2024-01-01T10:00:00+00:00",
+    )
+    for month in range(2, 13):
+        repo.commit(
+            f"Tune core ({month})",
+            {"app/core.py": f"v = {month}\n", "package-lock.json": f'{{"v": {month}}}\n'},
+            author=GRACE if month % 2 else ADA,
+            date=f"2024-{month:02d}-15T10:00:00+00:00",
+        )
+    for day in (1, 2, 3):
+        repo.commit(
+            f"Polish util ({day})",
+            {"app/util.py": f"u = {day}\n"},
+            author=LINUS,
+            date=f"2024-11-{day:02d}T10:00:00+00:00",
+        )
+    repo.commit(
+        "Change logo",
+        {"logo.png": b"\x89PNG\r\n\x1a\n\x00\x01"},
+        author=ADA,
+        date="2024-11-20T10:00:00+00:00",
+    )
+    repo.commit(
+        "Remove old module", {"app/old.py": None}, author=ADA, date="2024-11-25T10:00:00+00:00"
+    )
+    repo.branch("feature")
+    repo.commit(
+        "Feature work",
+        {"app/feature.py": "f = 1\n"},
+        author=GRACE,
+        date="2024-12-20T10:00:00+00:00",
+    )
+    repo.switch("main")
+    repo.merge("feature", "Merge feature", author=ADA, date="2024-12-28T10:00:00+00:00")
+    return repo

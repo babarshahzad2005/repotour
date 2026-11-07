@@ -65,7 +65,7 @@ flowchart TB
 
 - **CLI** parses arguments, loads config, runs the pipeline, writes output, and sets the exit code. It contains no analysis logic.
 - **Config loader** reads `.repotour.yml`, validates it, merges CLI flags on top, and produces a frozen `Config`. Its hash is part of every cache key.
-- **Pipeline orchestrator** builds the `RepoSnapshot`, runs analyzers in dependency order, runs the ranker and optional summarizer, and assembles the `Tour`.
+- **Pipeline orchestrator** builds the `RepoSnapshot`, runs analyzers in dependency order, runs the ranker and optional summarizer, and assembles the `Tour`. A single table maps each analyzer to the `Tour` field it fills, so adding a section never touches the assembly code. History is read from git lazily, on first use.
 - **Repo scanner** lists regular files in the `HEAD` tree (`git ls-tree`) and reads their committed contents in one `git cat-file --batch` call, so uncommitted changes never leak in. It computes content hashes and line counts, and asks the classifier to categorize each file.
 - **File classifier** marks files as source, test, generated, vendored, config, docs, or other, using `.gitattributes` (`linguist-generated`, `linguist-vendored`), known paths (`node_modules/`, `vendor/`, `dist/`, `third_party/`, `*.min.js`, lockfiles), file headers (`Code generated ... DO NOT EDIT`, `@generated`), and config excludes. Attributes are read with `git check-attr --cached`, so they come from the committed `.gitattributes`; an explicitly unset `linguist-generated`/`linguist-vendored` switches off the matching heuristics. Binary files (a NUL byte in the first 8 KB) are `other`; only binaries without a known asset extension (images, fonts, archives, media, PDF) produce a warning, so a repository's images never flood the warnings. Files over 1 MB keep their category but get no language and a warning. Test files match paths `test/`, `tests/`, `__tests__/`, `spec/` or names `test_*.py`, `*_test.py`, `*_test.go`, `*.test.{js,ts,jsx,tsx}`, `*.spec.{js,ts,jsx,tsx}`, plus patterns from config. Git LFS pointer files are `other`. Submodules are listed in the overview and never entered. Each file records the reason for a non-obvious category, which the tour shows as evidence.
 - **Git reader** is the only module that runs `git`. It returns typed records, never raw output.
@@ -198,6 +198,7 @@ repotour/
   cache/store.py
   model/tour.py
   model/snapshot.py      # FileInfo, RepoSnapshot (with committed contents)
+  model/history.py       # CommitRecord, FileChange
   model/serde.py         # dataclass <-> JSON data, for results, cache, --json
   render/markdown.py
   render/html.py
