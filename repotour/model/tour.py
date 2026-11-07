@@ -89,12 +89,21 @@ class Package(Claim):
     name: str | None
 
 
+@dataclass(frozen=True, kw_only=True)
+class Command(Claim):
+    """A command quoted from the project's own files."""
+
+    purpose: str  # "install", "run", "test", or "other"
+    command: str
+
+
 @dataclass(frozen=True)
 class Overview:
     size: Size
     languages: tuple[LanguageStat, ...] = ()
     project_types: tuple[ProjectType, ...] = ()  # empty means "unknown"
     packages: tuple[Package, ...] = ()
+    commands: tuple[Command, ...] = ()
     excluded: tuple[ExcludedFiles, ...] = ()
     submodules: tuple[Submodule, ...] = ()
 
