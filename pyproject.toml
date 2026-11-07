@@ -1,6 +1,6 @@
 [project]
 name = "repotour"
-version = "0.1.0.dev0"
+version = "0.1.0"
 description = "Generate a codebase tour for new contributors: where to start, what matters, and who to ask."
 readme = "README.md"
 license = "MIT"
