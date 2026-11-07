@@ -73,21 +73,63 @@ class TreeEntry:
     oid: str
 
 
+@dataclass(frozen=True)
+class TreeListing:
+    files: tuple[TreeEntry, ...]
+    submodules: tuple[str, ...]
+
+
 _REGULAR_FILE_MODES = (b"100644", b"100755")
+LINGUIST_ATTRIBUTES = ("linguist-generated", "linguist-vendored")
 
 
-def list_tree(root: Path, commit: str) -> list[TreeEntry]:
-    """Every regular file in `commit`, sorted by path."""
+def list_tree(root: Path, commit: str) -> TreeListing:
+    """Regular files and submodule paths in `commit`, each sorted by path.
+
+    Symlinks are skipped; submodules are listed but never entered.
+    """
     raw = _git_bytes(root, "ls-tree", "-r", "-z", "--full-tree", commit)
-    entries = []
+    files: list[TreeEntry] = []
+    submodules: list[str] = []
     for record in raw.split(b"\0"):
         if not record:
             continue
-        meta, _, path = record.partition(b"\t")
+        meta, _, raw_path = record.partition(b"\t")
         mode, kind, oid = meta.split(b" ")
+        path = raw_path.decode("utf-8", "replace")
         if kind == b"blob" and mode in _REGULAR_FILE_MODES:
-            entries.append(TreeEntry(path=path.decode("utf-8", "replace"), oid=oid.decode()))
-    return sorted(entries, key=lambda e: e.path)
+            files.append(TreeEntry(path=path, oid=oid.decode()))
+        elif kind == b"commit":
+            submodules.append(path)
+    return TreeListing(
+        files=tuple(sorted(files, key=lambda e: e.path)), submodules=tuple(sorted(submodules))
+    )
+
+
+def check_attributes(root: Path, paths: list[str]) -> dict[str, dict[str, str]]:
+    """Linguist attributes per path, as `git check-attr` reports them.
+
+    Values are `set`, `unset`, `unspecified`, or the assigned value. Attributes
+    come from the committed `.gitattributes` files (via the index), not the
+    working tree.
+    """
+    if not paths:
+        return {}
+    raw = _git_bytes(
+        root,
+        "check-attr",
+        "--cached",
+        "-z",
+        "--stdin",
+        *LINGUIST_ATTRIBUTES,
+        stdin=b"\0".join(p.encode("utf-8") for p in paths) + b"\0",
+    )
+    fields = raw.split(b"\0")
+    attrs: dict[str, dict[str, str]] = {p: {} for p in paths}
+    for i in range(0, len(fields) - 2, 3):
+        path, attr, value = (f.decode("utf-8", "replace") for f in fields[i : i + 3])
+        attrs.setdefault(path, {})[attr] = value
+    return attrs
 
 
 def read_blobs(root: Path, oids: list[str]) -> dict[str, bytes]:

@@ -20,6 +20,12 @@ class FileInfo:
     lines: int
     content_hash: str  # sha256 of file bytes
     category: Category
+    reason: str | None = None  # why the classifier chose a non-obvious category
+
+    @property
+    def is_excluded(self) -> bool:
+        """Generated and vendored files never count toward the tour."""
+        return self.category in ("generated", "vendored")
 
 
 @dataclass(frozen=True)
@@ -28,6 +34,8 @@ class RepoSnapshot:
     head_commit: str
     files: tuple[FileInfo, ...]
     config: Config
+    submodules: tuple[str, ...] = ()
+    warnings: tuple[str, ...] = ()  # file-level warnings from scanning
     contents: Mapping[str, bytes] = field(
         default_factory=lambda: MappingProxyType({}), compare=False, repr=False
     )

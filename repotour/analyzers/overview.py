@@ -7,31 +7,54 @@ from collections import defaultdict
 from repotour.analyzers.base import AnalyzerResult
 from repotour.model.serde import to_data
 from repotour.model.snapshot import FileInfo, RepoSnapshot
-from repotour.model.tour import Evidence, LanguageStat, Overview, Size
+from repotour.model.tour import (
+    Evidence,
+    EvidenceKind,
+    ExcludedFiles,
+    LanguageStat,
+    Overview,
+    Size,
+    Submodule,
+)
 
 EVIDENCE_FILES_PER_LANGUAGE = 3
+EXAMPLES_PER_EXCLUDED_CATEGORY = 3
 
 
 class OverviewAnalyzer:
     name = "overview"
-    version = 1
+    version = 2
     depends_on: tuple[str, ...] = ()
 
     def run(self, snapshot: RepoSnapshot, inputs: dict[str, AnalyzerResult]) -> AnalyzerResult:
-        overview = Overview(size=_size(snapshot), languages=_languages(snapshot.files))
-        return AnalyzerResult(analyzer=self.name, data=to_data(overview))
+        counted = tuple(f for f in snapshot.files if not f.is_excluded)
+        overview = Overview(
+            size=_size(snapshot, counted),
+            languages=_languages(counted),
+            excluded=_excluded(snapshot.files),
+            submodules=tuple(
+                Submodule(
+                    path=path,
+                    evidence=(Evidence(kind="file", ref=path, detail="git submodule"),),
+                )
+                for path in snapshot.submodules
+            ),
+        )
+        return AnalyzerResult(
+            analyzer=self.name, data=to_data(overview), warnings=list(snapshot.warnings)
+        )
 
 
-def _size(snapshot: RepoSnapshot) -> Size:
-    files = snapshot.files
+def _size(snapshot: RepoSnapshot, counted: tuple[FileInfo, ...]) -> Size:
     return Size(
-        files=len(files),
-        lines_of_code=sum(f.lines for f in files if f.language is not None),
+        files=len(counted),
+        lines_of_code=sum(f.lines for f in counted if f.language is not None),
         evidence=(
             Evidence(
                 kind="commit_range",
                 ref=snapshot.head_commit,
-                detail=f"{len(files)} tracked files at this commit",
+                detail=f"{len(counted)} tracked files at this commit, "
+                "excluding generated and vendored files",
             ),
         ),
     )
@@ -54,3 +77,31 @@ def _languages(files: tuple[FileInfo, ...]) -> tuple[LanguageStat, ...]:
             )
         )
     return tuple(sorted(stats, key=lambda s: (-s.lines, s.language)))
+
+
+def _excluded(files: tuple[FileInfo, ...]) -> tuple[ExcludedFiles, ...]:
+    claims = []
+    for category in ("generated", "vendored"):
+        members = [f for f in files if f.category == category]
+        if not members:
+            continue
+        examples = members[:EXAMPLES_PER_EXCLUDED_CATEGORY]
+        claims.append(
+            ExcludedFiles(
+                category=category,
+                count=len(members),
+                evidence=tuple(
+                    Evidence(kind=_evidence_kind(f.reason), ref=f.path, detail=f.reason)
+                    for f in examples
+                ),
+            )
+        )
+    return tuple(claims)
+
+
+def _evidence_kind(reason: str | None) -> EvidenceKind:
+    if reason is not None and "gitattributes" in reason:
+        return "git_attribute"
+    if reason is not None and reason.startswith("config"):
+        return "config"
+    return "file"
