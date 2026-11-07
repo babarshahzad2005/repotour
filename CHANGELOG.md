@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Per-file parse cache: parse results are cached by content hash and language adapter version, so a re-run parses only changed files (a moved but unchanged file is never re-parsed). Within one run, each file is parsed once and shared by all analyzers.
 - Entry points section: where execution starts (scripts, CLIs, servers, web apps, `python -m` modules, console scripts) and the public surface (top-level packages), plus commands from `package.json`, `Dockerfile`, and `Cargo.toml` that point at real files, in any language. Pinned entry points from config come first; each kind is capped at 10.
 - Dependency graph section (Python): static imports parsed with tree-sitter and resolved to repository files (relative imports, top-level packages, `src/` layout), rendered as a Mermaid diagram that displays on GitHub. Every edge cites its import; external modules are counted; test, generated, and vendored files are left out; unparseable files become warnings.
 
