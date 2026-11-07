@@ -113,6 +113,13 @@ class Note(Claim):
     text: str
 
 
+@dataclass(frozen=True, kw_only=True)
+class MissingBasic(Claim):
+    """Something newcomers expect that the repository lacks."""
+
+    item: str  # "README", "tests", "contributing guide", "license", "CI configuration"
+
+
 @dataclass(frozen=True)
 class Overview:
     size: Size
@@ -122,6 +129,7 @@ class Overview:
     commands: tuple[Command, ...] = ()
     directories: tuple[DirectoryPurpose, ...] = ()
     notes: tuple[Note, ...] = ()
+    missing: tuple[MissingBasic, ...] = ()
     excluded: tuple[ExcludedFiles, ...] = ()
     submodules: tuple[Submodule, ...] = ()
 

@@ -91,3 +91,53 @@ def messy(parent: Path) -> FixtureRepo:
         gitlinks={"libs/sub": "1111111111111111111111111111111111111111"},
     )
     return repo
+
+
+SHOWCASE_PYPROJECT = """\
+[project]
+name = "showcase"
+dependencies = ["click>=8"]
+
+[project.scripts]
+showcase = "showcase.cli:main"
+"""
+
+
+def showcase(parent: Path) -> FixtureRepo:
+    """Exercises every overview feature at once: the M1 acceptance fixture."""
+    repo = FixtureRepo.create(parent, "showcase")
+    repo.commit(
+        "Start the showcase project",
+        {
+            ".repotour.yml": (
+                "version: 1\n"
+                "name: Showcase\n"
+                "notes:\n"
+                "  tools: Maintainer scripts; safe to ignore at first.\n"
+                "  src/showcase/core.py: Start reading here.\n"
+            ),
+            ".gitattributes": "src/showcase/_version.py linguist-generated\n",
+            "README.md": "# Showcase\n\nA sample project.\n",
+            "pyproject.toml": SHOWCASE_PYPROJECT,
+            "Makefile": "install:\n\tpip install -e .\n\ntest:\n\tpytest\n",
+            ".github/workflows/ci.yml": (
+                "on: [push]\njobs:\n  test:\n    runs-on: ubuntu-latest\n"
+                "    steps:\n      - run: pip install -e .\n      - run: pytest\n"
+            ),
+            "src/showcase/__init__.py": "",
+            "src/showcase/core.py": "def run() -> int:\n    return 1\n",
+            "src/showcase/cli.py": (
+                "from showcase.core import run\n\n\ndef main() -> None:\n    run()\n"
+            ),
+            "src/showcase/_version.py": "VERSION = '1.0'\n",
+            "plugins/README.md": "# Plugins\n\nOptional extensions for the CLI.\n",
+            "plugins/extra.py": "EXTRA = True\n",
+            "tools/bump.sh": "echo bump\n",
+            "tests/test_core.py": "def test_run() -> None:\n    assert True\n",
+            "vendor/legacy.py": "OLD = 1\n",
+            "uv.lock": "version = 1\n",
+            "assets/logo.png": b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR",
+        },
+        gitlinks={"external/theme": "2222222222222222222222222222222222222222"},
+    )
+    return repo
