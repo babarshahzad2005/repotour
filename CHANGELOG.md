@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - Hotspots section: the files changed most often in the hotspot window, measured back from HEAD's commit date (`--since`, default 6 months), each citing its commit range. Merge commits, generated and vendored files, and files no longer tracked are left out.
+- Ownership section: for directories up to depth 2 with at least 5 source or test files, the top authors by share of changed lines (names only, never emails) and contacts who committed there in the 12 months before HEAD. Authors are merged only through `.mailmap`; bots (`[bot]` names and config `bots`) and bulk commits are left out; renamed files count toward their current directory.
 - Bulk commits (more files than `thresholds.bulk_commit_files`, default 200, or listed in `.git-blame-ignore-revs` or config `ignore_revs`) are left out of the history-based sections, and the tour says how many with examples.
 - Renamed and moved files keep their history: renames are detected in the same `git log` pass and chained to the path at HEAD.
 
