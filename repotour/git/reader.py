@@ -85,14 +85,15 @@ _LOG_FORMAT = "--format=%x1e%H%x1f%aN%x1f%aE%x1f%ct"
 def read_history(root: Path, head: str) -> tuple[CommitRecord, ...]:
     """History: commits reachable from `head`, merges excluded, newest first.
 
-    Authors are normalized through `.mailmap`. Renames are not followed here.
+    Authors are normalized through `.mailmap`. Renames are detected repo-wide in
+    the same pass (`-M`) and reported as `old_path`; `follow_renames()` links them.
     """
     raw = _git_bytes(
         root,
         "log",
         "--no-merges",
         "--use-mailmap",
-        "--no-renames",
+        "-M",
         "--numstat",
         "-z",
         _LOG_FORMAT,
@@ -104,16 +105,23 @@ def read_history(root: Path, head: str) -> tuple[CommitRecord, ...]:
 def _parse_commit(chunk: bytes) -> CommitRecord:
     header, _, body = chunk.partition(b"\0")
     sha, name, email, timestamp = (f.decode("utf-8", "replace") for f in header.split(_FIELD))
+    # With -z, numstat writes "added\tremoved\tpath\0", or for a rename
+    # "added\tremoved\t\0old\0new\0" (never the brace form).
+    tokens = iter(body.lstrip(b"\n").split(b"\0"))
     files = []
-    for entry in body.lstrip(b"\n").split(b"\0"):
+    for entry in tokens:
         if not entry:
             continue
         added, removed, path = entry.split(b"\t", 2)
+        old_path = None
+        if not path:
+            old_path, path = next(tokens), next(tokens)
         files.append(
             FileChange(
-                path=path.decode("utf-8", "replace"),
+                path=_decode(path),
                 added=None if added == b"-" else int(added),
                 removed=None if removed == b"-" else int(removed),
+                old_path=None if old_path is None else _decode(old_path),
             )
         )
     return CommitRecord(
@@ -210,6 +218,10 @@ def read_blobs(root: Path, oids: list[str]) -> dict[str, bytes]:
         blobs[oid.decode()] = raw[start:end]
         pos = end + 1
     return blobs
+
+
+def _decode(raw: bytes) -> str:
+    return raw.decode("utf-8", "replace")
 
 
 def _fmt(version: GitVersion) -> str:

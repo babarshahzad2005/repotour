@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 
 from repotour.analyzers.base import AnalyzerResult
 from repotour.config import describe_duration, duration_days
-from repotour.model.history import CommitRecord
+from repotour.model.history import CommitRecord, follow_renames
 from repotour.model.serde import to_data
 from repotour.model.snapshot import RepoSnapshot
 from repotour.model.tour import Evidence, Hotspot, HotspotsSection
@@ -21,7 +21,7 @@ SECONDS_PER_DAY = 86_400
 
 class HistoryAnalyzer:
     name = "history"
-    version = 1
+    version = 2
     depends_on: tuple[str, ...] = ()
 
     def run(self, snapshot: RepoSnapshot, inputs: dict[str, AnalyzerResult]) -> AnalyzerResult:
@@ -31,7 +31,7 @@ class HistoryAnalyzer:
         counted = {f.path for f in snapshot.files if not f.is_excluded}
 
         touches: dict[str, list[CommitRecord]] = defaultdict(list)
-        for commit in snapshot.history():
+        for commit in follow_renames(snapshot.history()):
             if commit.timestamp < start:
                 continue
             for change in commit.files:

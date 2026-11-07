@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - Hotspots section: the files changed most often in the hotspot window, measured back from HEAD's commit date (`--since`, default 6 months), each citing its commit range. Merge commits, generated and vendored files, and files no longer tracked are left out.
+- Renamed and moved files keep their history: renames are detected in the same `git log` pass and chained to the path at HEAD.
 
 ## [0.1.0] - 2026-11-07
 
