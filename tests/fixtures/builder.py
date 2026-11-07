@@ -69,6 +69,12 @@ class FixtureRepo:
         self._git("commit", "--quiet", "--allow-empty", "-m", message, extra_env=env)
         return self._git("rev-parse", "HEAD").strip()
 
+    def shallow_clone(self, name: str, depth: int = 1) -> FixtureRepo:
+        """Clone this repository with truncated history into a sibling directory."""
+        dest = self.root.parent / name
+        self._git("clone", "--quiet", f"--depth={depth}", self.root.as_uri(), str(dest))
+        return FixtureRepo(root=dest, _empty_config=self._empty_config)
+
     def _git(self, *args: str, extra_env: dict[str, str] | None = None) -> str:
         # Drop inherited GIT_* overrides (GIT_DIR, GIT_INDEX_FILE, ...) so the
         # developer's environment can never leak into a fixture build.

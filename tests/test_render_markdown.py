@@ -3,7 +3,9 @@ from __future__ import annotations
 from repotour.model.tour import Meta, Tour
 from repotour.render.markdown import render_markdown
 
-TOUR = Tour(meta=Meta(repo_name="demo", head_commit="a" * 40, tool_version="1.2.3"))
+TOUR = Tour(
+    meta=Meta(repo_name="demo", head_commit="a" * 40, tool_version="1.2.3", config_hash="c" * 64)
+)
 
 
 def test_rendering_is_pure() -> None:

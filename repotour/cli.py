@@ -10,6 +10,8 @@ from typing import Annotated
 
 import typer
 
+from repotour.config import CliOverrides
+from repotour.errors import RepotourError
 from repotour.output import write_text
 from repotour.pipeline import build_tour
 from repotour.render.markdown import render_markdown
@@ -30,9 +32,25 @@ def main(
         Path | None,
         typer.Option("--out", help="Output path. Defaults to TOUR.md at the repository root."),
     ] = None,
+    since: Annotated[
+        str | None,
+        typer.Option(
+            "--since",
+            help="Hotspot window as <n><d|w|m|y>, e.g. 6m. Overrides the config file.",
+        ),
+    ] = None,
 ) -> None:
-    result = build_tour(path)
+    try:
+        result = build_tour(path, CliOverrides(since=since))
+    except RepotourError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(exc.exit_code) from None
+
     target = out if out is not None else result.root / "TOUR.md"
     write_text(target, render_markdown(result.tour))
+
     warnings = len(result.tour.warnings)
     typer.echo(f"Wrote {target} ({warnings} warning{'' if warnings == 1 else 's'})")
+    if result.has_uncommitted_changes:
+        short = result.tour.meta.head_commit[:7]
+        typer.echo(f"Note: uncommitted changes are ignored; the tour describes HEAD ({short}).")

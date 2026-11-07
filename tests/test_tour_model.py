@@ -8,7 +8,7 @@ from repotour.model.tour import Claim, Evidence, Meta, Tour, find_unevidenced_cl
 from repotour.pipeline import build_tour
 from tests.fixtures.repos import minimal
 
-META = Meta(repo_name="demo", head_commit="0" * 40, tool_version="0.0.0")
+META = Meta(repo_name="demo", head_commit="0" * 40, tool_version="0.0.0", config_hash="c" * 64)
 
 
 @dataclass(frozen=True, kw_only=True)

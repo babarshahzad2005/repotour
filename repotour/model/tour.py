@@ -39,6 +39,7 @@ class Meta:
     repo_name: str
     head_commit: str
     tool_version: str
+    config_hash: str
 
 
 @dataclass(frozen=True)
