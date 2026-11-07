@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- JavaScript and TypeScript in the dependency graph and entry points: static `import`/`export ... from`/`require('literal')` (and TypeScript `import x = require()`), resolved through relative paths with extension inference and index files, `tsconfig.json` `paths`/`baseUrl`, and workspace packages; entry points from `package.json` `main`/`module`/`exports`/`bin`, server startup (`.listen()`), and `require.main === module`.
 - Core and leaf modules: Repotour's own deterministic PageRank names the most depended-on modules; modules nothing imports (that are not entry points or empty) are listed as safe places for a first change.
 - Large dependency graphs collapse to directories, one level coarser at a time, to at most `thresholds.graph_max_nodes` (60) nodes; if even the top level is too big, the highest-ranked directories are kept and the rest counted. `--full-graph` (or `full_graph: true`) draws every module.
 - Per-file parse cache: parse results are cached by content hash and language adapter version, so a re-run parses only changed files (a moved but unchanged file is never re-parsed). Within one run, each file is parsed once and shared by all analyzers.

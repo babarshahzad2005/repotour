@@ -69,7 +69,7 @@ class EntryPointsAnalyzer:
                         entry.description,
                         Evidence(kind="file", ref=path, detail=f"line {entry.line}"),
                     )
-            index = adapter.build_index(list(parsed), all_paths)
+            index = adapter.build_index(list(parsed), all_paths, read)
             for declared in adapter.declared_entries(list(parsed), all_paths, read, index):
                 add(declared.path, declared.kind, declared.description, declared.evidence)
 

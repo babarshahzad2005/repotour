@@ -73,9 +73,9 @@ No directory has enough source or test files for an ownership entry.
 
 ## Dependency graph
 
-How modules import each other (Python; static imports only; tests, generated, and vendored files left out). 1 module, 0 imports inside the repository.
+How modules import each other (JavaScript/TypeScript, Python; static imports only; tests, generated, and vendored files left out). 2 modules, 0 imports inside the repository.
 
-**Leaf modules** (nothing imports them; safe places for a first change): `src/app.py`.
+**Leaf modules** (nothing imports them; safe places for a first change): `src/app.py`, `src/huge.js`.
 
 ## Warnings
 

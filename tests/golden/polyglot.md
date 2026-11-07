@@ -57,6 +57,6 @@ No directory has enough source or test files for an ownership entry.
 
 ## Dependency graph
 
-How modules import each other (Python; static imports only; tests, generated, and vendored files left out). 2 modules, 0 imports inside the repository.
+How modules import each other (JavaScript/TypeScript, Python; static imports only; tests, generated, and vendored files left out). 4 modules, 0 imports inside the repository.
 
-**Leaf modules** (nothing imports them; safe places for a first change): `tools/build.py`.
+**Leaf modules** (nothing imports them; safe places for a first change): `tools/build.py`, `web/app.ts`, `web/legacy.js`.

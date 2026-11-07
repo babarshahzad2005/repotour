@@ -49,11 +49,16 @@ class LanguageAdapter(Protocol):
 
     def handles(self, path: str) -> bool: ...
 
-    def parse(self, source: bytes) -> ParseResult: ...
+    def parse(self, source: bytes, path: str) -> ParseResult:
+        """Parse one file. `path` picks the grammar where a language has several."""
+        ...
 
-    def build_index(self, paths: Sequence[str], all_paths: Sequence[str]) -> Any:
+    def build_index(
+        self, paths: Sequence[str], all_paths: Sequence[str], read: Callable[[str], str]
+    ) -> Any:
         """Repo-wide lookup data for resolution. `paths` are this language's
-        graph files; `all_paths` are every tracked file (for manifests)."""
+        graph files; `all_paths` are every tracked file; `read` returns a
+        tracked file's committed text (for manifests and configs)."""
         ...
 
     def resolve(self, raw: RawImport, from_path: str, index: Any) -> tuple[str, ...]:

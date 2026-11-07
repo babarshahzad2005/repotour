@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import math
 from collections import Counter
+from collections.abc import Callable
 
 from repotour.analyzers.base import AnalyzerResult
 from repotour.graph.collapse import ROOT_GROUP, collapse
@@ -56,7 +57,7 @@ class DependenciesAnalyzer:
                 continue
             languages.append(adapter.name)
             parsed = _parse_all(adapter, paths, snapshot, warnings)
-            index = adapter.build_index(list(parsed), all_paths)
+            index = adapter.build_index(list(parsed), all_paths, _reader(snapshot))
             nodes.extend(parsed)
             for path, imports in parsed.items():
                 for raw in imports:
@@ -94,6 +95,13 @@ class DependenciesAnalyzer:
             leaves_omitted=max(0, len(leaves) - MAX_LEAVES),
         )
         return AnalyzerResult(analyzer=self.name, data=to_data(section), warnings=warnings)
+
+
+def _reader(snapshot: RepoSnapshot) -> Callable[[str], str]:
+    def read(path: str) -> str:
+        return snapshot.read_bytes(path).decode("utf-8", "replace")
+
+    return read
 
 
 def _parse_all(

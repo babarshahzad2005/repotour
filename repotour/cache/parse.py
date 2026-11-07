@@ -8,6 +8,7 @@ are parsed again; a moved but unchanged file is never re-parsed.
 from __future__ import annotations
 
 import json
+from pathlib import PurePosixPath
 
 from repotour.cache.store import CacheStore
 from repotour.languages.base import LanguageAdapter, ParseResult
@@ -24,20 +25,22 @@ class ParseCache:
 
     def parse(self, adapter: LanguageAdapter, path: str) -> ParseResult:
         content_hash = self._hashes[path]
-        key = (adapter.name, adapter.version, content_hash)
+        # The extension is part of the key: one language may use several grammars.
+        language = f"{adapter.name}{PurePosixPath(path).suffix}"
+        key = (language, adapter.version, content_hash)
         if key in self._memo:
             return self._memo[key]
-        result = self._load(adapter, content_hash)
+        result = self._load(language, adapter.version, content_hash)
         if result is None:
-            result = adapter.parse(self._snapshot.read_bytes(path))
+            result = adapter.parse(self._snapshot.read_bytes(path), path)
             if self._store is not None:
                 payload = json.dumps(to_data(result), separators=(",", ":"))
-                self._store.put_parse(content_hash, adapter.name, adapter.version, payload)
+                self._store.put_parse(content_hash, language, adapter.version, payload)
         self._memo[key] = result
         return result
 
-    def _load(self, adapter: LanguageAdapter, content_hash: str) -> ParseResult | None:
+    def _load(self, language: str, version: int, content_hash: str) -> ParseResult | None:
         if self._store is None:
             return None
-        payload = self._store.get_parse(content_hash, adapter.name, adapter.version)
+        payload = self._store.get_parse(content_hash, language, version)
         return None if payload is None else from_data(ParseResult, json.loads(payload))
