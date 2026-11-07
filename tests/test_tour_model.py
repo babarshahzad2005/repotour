@@ -12,13 +12,13 @@ META = Meta(repo_name="demo", head_commit="0" * 40, tool_version="0.0.0")
 
 
 @dataclass(frozen=True, kw_only=True)
-class Fact(Claim):
+class TextClaim(Claim):
     text: str
 
 
 @dataclass(frozen=True, kw_only=True)
 class Group(Claim):
-    members: tuple[Fact, ...]
+    members: tuple[TextClaim, ...]
 
 
 def test_every_claim_in_a_real_tour_has_evidence(tmp_path: Path) -> None:
@@ -28,14 +28,14 @@ def test_every_claim_in_a_real_tour_has_evidence(tmp_path: Path) -> None:
 
 
 def test_claim_without_evidence_is_flagged() -> None:
-    bare = Fact(text="this is an entry point", evidence=())
+    bare = TextClaim(text="this is an entry point", evidence=())
     tour = Tour(meta=META, overview=(bare,))
 
     assert find_unevidenced_claims(tour) == [bare]
 
 
 def test_nested_claim_without_evidence_is_flagged() -> None:
-    bare = Fact(text="nested", evidence=())
+    bare = TextClaim(text="nested", evidence=())
     group = Group(members=(bare,), evidence=(Evidence(kind="file", ref="a.py"),))
     tour = Tour(meta=META, entry_points=(group,))
 
@@ -43,14 +43,14 @@ def test_nested_claim_without_evidence_is_flagged() -> None:
 
 
 def test_claims_with_evidence_pass() -> None:
-    fact = Fact(text="ok", evidence=(Evidence(kind="file", ref="a.py"),))
+    fact = TextClaim(text="ok", evidence=(Evidence(kind="file", ref="a.py"),))
     tour = Tour(meta=META, overview=(fact,))
 
     assert find_unevidenced_claims(tour) == []
 
 
 def test_tour_model_is_json_serializable() -> None:
-    fact = Fact(text="ok", evidence=(Evidence(kind="import", ref="a.py -> b.py"),))
+    fact = TextClaim(text="ok", evidence=(Evidence(kind="import", ref="a.py -> b.py"),))
     tour = Tour(meta=META, overview=(fact,), warnings=("something was skipped",))
 
     data = json.loads(json.dumps(tour.to_dict()))

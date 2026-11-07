@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from repotour import __version__
@@ -22,6 +23,17 @@ def test_tour_matches_golden(tmp_path: Path, golden: GoldenCheck) -> None:
     repo = minimal(tmp_path)
 
     run_repotour(str(repo.root))
+
+    golden("minimal", (repo.root / "TOUR.md").read_bytes().decode("utf-8"))
+
+
+def test_no_argument_tours_the_current_repository(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, golden: GoldenCheck
+) -> None:
+    repo = minimal(tmp_path)
+    monkeypatch.chdir(repo.root)
+
+    run_repotour()
 
     golden("minimal", (repo.root / "TOUR.md").read_bytes().decode("utf-8"))
 

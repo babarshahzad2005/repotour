@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tests.fixtures.builder import FixtureRepo
+from tests.fixtures.builder import Author, FixtureRepo
 
 
 def minimal(parent: Path) -> FixtureRepo:
@@ -17,12 +17,11 @@ def minimal(parent: Path) -> FixtureRepo:
             "app/__init__.py": "",
             "app/main.py": 'def main() -> None:\n    print("hello")\n',
         },
-        date="2024-01-01T12:00:00+00:00",
     )
     repo.commit(
         "Add a greeting helper",
         {"app/greet.py": 'def greet(name: str) -> str:\n    return f"hello {name}"\n'},
-        author=("Grace Hopper", "grace@example.com"),
+        author=Author("Grace Hopper", "grace@example.com"),
         date="2024-02-01T12:00:00+00:00",
     )
     return repo

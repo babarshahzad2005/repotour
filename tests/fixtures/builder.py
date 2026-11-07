@@ -12,7 +12,14 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-DEFAULT_AUTHOR = ("Ada Lovelace", "ada@example.com")
+
+@dataclass(frozen=True)
+class Author:
+    name: str
+    email: str
+
+
+DEFAULT_AUTHOR = Author("Ada Lovelace", "ada@example.com")
 DEFAULT_DATE = "2024-01-01T12:00:00+00:00"
 
 
@@ -38,7 +45,7 @@ class FixtureRepo:
         message: str,
         files: dict[str, str | bytes | None],
         *,
-        author: tuple[str, str] = DEFAULT_AUTHOR,
+        author: Author = DEFAULT_AUTHOR,
         date: str = DEFAULT_DATE,
     ) -> str:
         """Write, overwrite, or delete (None) files, commit them, and return the SHA."""
@@ -51,21 +58,23 @@ class FixtureRepo:
             data = content.encode("utf-8") if isinstance(content, str) else content
             target.write_bytes(data)
         self._git("add", "--all")
-        name, email = author
         env = {
-            "GIT_AUTHOR_NAME": name,
-            "GIT_AUTHOR_EMAIL": email,
+            "GIT_AUTHOR_NAME": author.name,
+            "GIT_AUTHOR_EMAIL": author.email,
             "GIT_AUTHOR_DATE": date,
-            "GIT_COMMITTER_NAME": name,
-            "GIT_COMMITTER_EMAIL": email,
+            "GIT_COMMITTER_NAME": author.name,
+            "GIT_COMMITTER_EMAIL": author.email,
             "GIT_COMMITTER_DATE": date,
         }
         self._git("commit", "--quiet", "--allow-empty", "-m", message, extra_env=env)
         return self._git("rev-parse", "HEAD").strip()
 
     def _git(self, *args: str, extra_env: dict[str, str] | None = None) -> str:
+        # Drop inherited GIT_* overrides (GIT_DIR, GIT_INDEX_FILE, ...) so the
+        # developer's environment can never leak into a fixture build.
+        inherited = {k: v for k, v in os.environ.items() if not k.upper().startswith("GIT_")}
         env = {
-            **os.environ,
+            **inherited,
             "GIT_CONFIG_GLOBAL": str(self._empty_config),
             "GIT_CONFIG_NOSYSTEM": "1",
             **(extra_env or {}),
