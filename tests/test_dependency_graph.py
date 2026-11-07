@@ -139,7 +139,7 @@ def test_tests_generated_and_vendored_files_are_left_out(tmp_path: Path) -> None
         },
     )
 
-    assert graph.nodes == ("app.py", "lib.py")
+    assert [n.id for n in graph.nodes] == ["app.py", "lib.py"]
     assert edges(graph) == [("app.py", "lib.py")]
 
 

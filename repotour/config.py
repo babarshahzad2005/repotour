@@ -63,6 +63,7 @@ class Config:
     test_patterns: tuple[str, ...] = ()
     bots: tuple[str, ...] = ()
     ignore_revs: tuple[str, ...] = ()
+    full_graph: bool = False
     thresholds: Thresholds = field(default_factory=Thresholds)
     caps: Caps = field(default_factory=Caps)
     summaries: Summaries = field(default_factory=Summaries)
@@ -77,6 +78,7 @@ class CliOverrides:
     """CLI flags that override config values. None means "not given"."""
 
     since: str | None = None
+    full_graph: bool | None = None
 
 
 _DAYS_PER_UNIT = {"d": 1, "w": 7, "m": 30, "y": 365}
@@ -102,6 +104,8 @@ def load_config(root: Path, overrides: CliOverrides | None = None) -> Config:
     config = _parse(path.read_text(encoding="utf-8")) if path.exists() else Config()
     if overrides is not None and overrides.since is not None:
         config = dataclasses.replace(config, since=overrides.since)
+    if overrides is not None and overrides.full_graph is not None:
+        config = dataclasses.replace(config, full_graph=overrides.full_graph)
     _check_ranges(config)
     return config
 
@@ -164,7 +168,11 @@ def _convert(tp: Any, value: object, where: str) -> Any:
         if not isinstance(value, list) or not all(isinstance(v, str) for v in value):
             raise ConfigError(f"{CONFIG_FILE}: '{where}' must be a list of strings")
         return tuple(value)
-    if tp is bool or isinstance(value, bool):
+    if tp is bool:
+        if isinstance(value, bool):
+            return value
+        raise ConfigError(f"{CONFIG_FILE}: '{where}' must be true or false")
+    if isinstance(value, bool):
         raise ConfigError(f"{CONFIG_FILE}: '{where}' must be {_describe(tp)}")
     if tp is float and isinstance(value, int | float):
         return float(value)

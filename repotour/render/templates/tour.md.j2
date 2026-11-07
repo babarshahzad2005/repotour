@@ -172,12 +172,23 @@ _Unavailable: see Warnings._
 {% if tour.dependency_graph %}
 {% set g = tour.dependency_graph %}
 {% if g.languages %}
-How modules import each other ({{ g.languages | join(", ") }}; static imports only; tests, generated, and vendored files left out). {{ g.nodes | length }} module{{ "" if g.nodes | length == 1 else "s" }}, {{ g.edges | length }} import{{ "" if g.edges | length == 1 else "s" }} inside the repository.
+How modules import each other ({{ g.languages | join(", ") }}; static imports only; tests, generated, and vendored files left out). {{ g.modules }} module{{ "" if g.modules == 1 else "s" }}, {{ g.imports }} import{{ "" if g.imports == 1 else "s" }} inside the repository.
+{% if g.depth %}
+Collapsed to directories {{ g.depth }} level{{ "" if g.depth == 1 else "s" }} deep to stay readable{% if g.omitted %}; {{ g.omitted }} director{{ "y" if g.omitted == 1 else "ies" }} with the lowest PageRank left out{% endif %} (run with `--full-graph` to draw every module).
+{% endif %}
 {% if g.edges %}
 
 ```mermaid
 {{ mermaid(g) }}
 ```
+{% endif %}
+{% if g.core %}
+
+**Core modules** (most depended on, by PageRank): {% for c in g.core %}`{{ c.path }}` ({{ c.evidence[0].detail }}){{ ", " if not loop.last }}{% endfor %}.
+{% endif %}
+{% if g.leaves %}
+
+**Leaf modules** (nothing imports them; safe places for a first change): {% for l in g.leaves %}`{{ l.path }}`{{ ", " if not loop.last }}{% endfor %}{% if g.leaves_omitted %}, and {{ g.leaves_omitted }} more{% endif %}.
 {% endif %}
 {% if g.external %}
 
