@@ -1,8 +1,9 @@
-"""Ownership: who has changed each area most, and who to ask today.
+"""Ownership: who has changed each area most, who to ask today, where a
+single person holds an area, and which areas are in flux or settled.
 
 Shares come from changed lines (added + removed) in history, never from
-blame (ADR-0002). Renames are followed, bulk commits and bots are left out,
-and authors are merged only through `.mailmap`.
+blame (ADR-0002). Renames are followed, bulk commits and bots are left out
+of authorship, and authors are merged only through `.mailmap`.
 """
 
 from __future__ import annotations
@@ -19,7 +20,9 @@ from repotour.model.history import CommitRecord, follow_renames
 from repotour.model.serde import to_data
 from repotour.model.snapshot import RepoSnapshot
 from repotour.model.tour import (
+    Activity,
     AuthorShare,
+    BusFactorWarning,
     Contact,
     Evidence,
     OwnershipEntry,
@@ -33,12 +36,26 @@ SECONDS_PER_DAY = 86_400
 class _Author:
     name: str = ""  # most recent mailmapped name for this identity
     lines: int = 0
-    commits: list[CommitRecord] = field(default_factory=list)
+    commits: list[CommitRecord] = field(default_factory=list)  # newest first
+
+
+@dataclass
+class _Directory:
+    files: int  # source and test files at HEAD
+    authors: dict[str, _Author] = field(default_factory=dict)
+    last_change: CommitRecord | None = None  # newest non-bulk change, bots included
+
+
+@dataclass(frozen=True)
+class _Cutoffs:
+    contact: int
+    active: int
+    stable: int
 
 
 class OwnershipAnalyzer:
     name = "ownership"
-    version = 1
+    version = 2
     depends_on: tuple[str, ...] = ("history",)
 
     def run(self, snapshot: RepoSnapshot, inputs: dict[str, AnalyzerResult]) -> AnalyzerResult:
@@ -48,35 +65,44 @@ class OwnershipAnalyzer:
         history = follow_renames(snapshot.history())
         bulk = find_bulk(snapshot, history)
 
-        # directory -> author identity -> totals; history is newest first.
-        totals: dict[str, dict[str, _Author]] = {d: {} for d in directories}
-        for commit in history:
-            if commit.sha in bulk or is_bot(commit.author_name, config):
+        for commit in history:  # newest first
+            if commit.sha in bulk:
                 continue
-            identity = commit.author_email.lower()
             touched: dict[str, int] = defaultdict(int)
             for change in commit.files:
                 if change.path not in counted:
                     continue
                 lines = (change.added or 0) + (change.removed or 0)
                 for directory in _ancestors(change.path):
-                    if directory in totals:
+                    if directory in directories:
                         touched[directory] += lines
+            bot = is_bot(commit.author_name, config)
             for directory, lines in touched.items():
-                author = totals[directory].setdefault(identity, _Author(name=commit.author_name))
+                state = directories[directory]
+                if state.last_change is None:
+                    state.last_change = commit
+                if bot:
+                    continue
+                author = state.authors.setdefault(
+                    commit.author_email.lower(), _Author(name=commit.author_name)
+                )
                 author.lines += lines
                 author.commits.append(commit)
 
-        contact_since = snapshot.head_timestamp - (
-            duration_days(config.thresholds.contact_window) * SECONDS_PER_DAY
+        head = snapshot.head_timestamp
+        thresholds = config.thresholds
+        cutoffs = _Cutoffs(
+            contact=head - duration_days(thresholds.contact_window) * SECONDS_PER_DAY,
+            active=head - duration_days(config.since) * SECONDS_PER_DAY,
+            stable=head - duration_days(thresholds.stable_window) * SECONDS_PER_DAY,
         )
         entries = tuple(
             entry
-            for directory in directories
-            if (entry := _entry(directory, totals[directory], config, contact_since)) is not None
+            for path in sorted(directories)
+            if (entry := _entry(path, directories[path], config, cutoffs)) is not None
         )
         section = OwnershipSection(
-            contact_window=describe_duration(config.thresholds.contact_window), entries=entries
+            contact_window=describe_duration(thresholds.contact_window), entries=entries
         )
         return AnalyzerResult(analyzer=self.name, data=to_data(section))
 
@@ -86,18 +112,18 @@ def is_bot(name: str, config: Config) -> bool:
     return lowered.endswith("[bot]") or lowered in {b.lower() for b in config.bots}
 
 
-def _eligible_directories(snapshot: RepoSnapshot) -> list[str]:
+def _eligible_directories(snapshot: RepoSnapshot) -> dict[str, _Directory]:
     limits = snapshot.config.thresholds
     counts: dict[str, int] = defaultdict(int)
     for f in snapshot.files:
         if f.category in ("source", "test"):
             for directory in _ancestors(f.path):
                 counts[directory] += 1
-    return sorted(
-        d
+    return {
+        d: _Directory(files=n)
         for d, n in counts.items()
         if n >= limits.ownership_min_files and d.count("/") < limits.ownership_max_depth
-    )
+    }
 
 
 def _ancestors(path: str) -> list[str]:
@@ -106,39 +132,96 @@ def _ancestors(path: str) -> list[str]:
 
 
 def _entry(
-    directory: str, authors: dict[str, _Author], config: Config, contact_since: int
+    path: str, state: _Directory, config: Config, cutoffs: _Cutoffs
 ) -> OwnershipEntry | None:
-    total = sum(a.lines for a in authors.values())
+    total = sum(a.lines for a in state.authors.values())
     if total == 0:
         return None
-    ranked = sorted(authors.values(), key=lambda a: (-a.lines, a.name))
+    ranked = sorted(state.authors.values(), key=lambda a: (-a.lines, a.name))
     cap = config.caps.authors_per_directory
-    shares = tuple(
-        AuthorShare(
-            name=a.name,
-            lines=a.lines,
-            share=int(100 * a.lines / total + 0.5),
-            commits=len(a.commits),
-            evidence=(_range_evidence(a),),
-        )
-        for a in ranked[:cap]
-    )
-    contacts = tuple(
-        Contact(
-            name=a.name,
-            last_commit=_date(a.commits[0].timestamp),
-            evidence=(
-                Evidence(
-                    kind="commit_range",
-                    ref=a.commits[0].sha[:12],
-                    detail=f"last commit to {directory}/ on {_date(a.commits[0].timestamp)}",
+    commits = sum(len(a.commits) for a in state.authors.values())
+    return OwnershipEntry(
+        path=path,
+        total_lines=total,
+        files=state.files,
+        commits=commits,
+        authors=tuple(
+            AuthorShare(
+                name=a.name,
+                lines=a.lines,
+                share=_percent(a.lines, total),
+                commits=len(a.commits),
+                evidence=(_range_evidence(a),),
+            )
+            for a in ranked[:cap]
+        ),
+        contacts=tuple(
+            Contact(
+                name=a.name,
+                last_commit=_date(a.commits[0].timestamp),
+                evidence=(
+                    Evidence(
+                        kind="commit_range",
+                        ref=a.commits[0].sha[:12],
+                        detail=f"last commit to {path}/ on {_date(a.commits[0].timestamp)}",
+                    ),
                 ),
+            )
+            for a in ranked
+            if a.commits[0].timestamp >= cutoffs.contact
+        )[:cap],
+        bus_factor=_bus_factor(ranked[0], total, state.files, commits, config),
+        activity=_activity(state.last_change, cutoffs),
+    )
+
+
+def _bus_factor(
+    top: _Author, total: int, files: int, commits: int, config: Config
+) -> BusFactorWarning | None:
+    limits = config.thresholds
+    if not (
+        top.lines / total > limits.bus_factor_share
+        and files >= limits.bus_factor_min_files
+        and commits >= limits.bus_factor_min_commits
+    ):
+        return None
+    evidence = _range_evidence(top)
+    return BusFactorWarning(
+        name=top.name,
+        share=_percent(top.lines, total),
+        evidence=(
+            Evidence(
+                kind="commit_range",
+                ref=evidence.ref,
+                detail=f"{evidence.detail}; directory has {files} files and {commits} commits",
             ),
-        )
-        for a in ranked
-        if a.commits[0].timestamp >= contact_since
-    )[:cap]
-    return OwnershipEntry(path=directory, total_lines=total, authors=shares, contacts=contacts)
+        ),
+    )
+
+
+def _activity(last: CommitRecord | None, cutoffs: _Cutoffs) -> Activity | None:
+    if last is None:
+        return None
+    if last.timestamp >= cutoffs.active:
+        state = "active"
+    elif last.timestamp < cutoffs.stable:
+        state = "stable"
+    else:
+        return None
+    return Activity(
+        state=state,
+        evidence=(
+            Evidence(
+                kind="commit_range",
+                ref=last.sha[:12],
+                detail=f"last change on {_date(last.timestamp)}",
+            ),
+        ),
+    )
+
+
+def _percent(part: int, total: int) -> int:
+    return int(100 * part / total + 0.5)
 
 
 def _range_evidence(author: _Author) -> Evidence:

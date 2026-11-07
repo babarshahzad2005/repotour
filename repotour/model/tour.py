@@ -177,12 +177,31 @@ class Contact(Claim):
     last_commit: str  # ISO date (UTC)
 
 
+@dataclass(frozen=True, kw_only=True)
+class BusFactorWarning(Claim):
+    """One author holds most of a big, busy directory."""
+
+    name: str
+    share: int  # percent
+
+
+@dataclass(frozen=True, kw_only=True)
+class Activity(Claim):
+    """Whether an area is in flux ("active") or settled ("stable")."""
+
+    state: str  # "active" or "stable"
+
+
 @dataclass(frozen=True)
 class OwnershipEntry:
     path: str
     total_lines: int
+    files: int = 0  # source and test files at HEAD
+    commits: int = 0  # non-bulk, non-bot commits that touched the directory
     authors: tuple[AuthorShare, ...] = ()
     contacts: tuple[Contact, ...] = ()
+    bus_factor: BusFactorWarning | None = None
+    activity: Activity | None = None
 
 
 @dataclass(frozen=True)

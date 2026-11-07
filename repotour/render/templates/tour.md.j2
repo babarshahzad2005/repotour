@@ -115,11 +115,19 @@ _Unavailable: see Warnings._
 {% if tour.ownership.entries %}
 Who has changed each area most, by share of changed lines across history (bulk commits and bots left out). Contacts committed to the area in the {{ tour.ownership.contact_window }} before HEAD.
 
-| Directory | Top authors | Contacts |
-|---|---|---|
+| Directory | Top authors | Contacts | Activity |
+|---|---|---|---|
 {% for e in tour.ownership.entries %}
-| `{{ e.path }}/` | {% for a in e.authors %}{{ a.name }} {{ a.share }}% (`{{ a.evidence[0].ref }}`){{ ", " if not loop.last }}{% endfor %} | {% if e.contacts %}{% for c in e.contacts %}{{ c.name }}{{ ", " if not loop.last }}{% endfor %}{% else %}none recently{% endif %} |
+| `{{ e.path }}/` | {% for a in e.authors %}{{ a.name }} {{ a.share }}% (`{{ a.evidence[0].ref }}`){{ ", " if not loop.last }}{% endfor %} | {% if e.contacts %}{% for c in e.contacts %}{{ c.name }}{{ ", " if not loop.last }}{% endfor %}{% else %}none recently{% endif %} | {% if e.activity %}{{ e.activity.state }} ({{ e.activity.evidence[0].detail }}){% else %}-{% endif %} |
 {% endfor %}
+{% set risky = tour.ownership.entries | selectattr("bus_factor") | list %}
+{% if risky %}
+
+**Bus-factor warnings** (one person holds most of a big, busy area):
+{% for e in risky %}
+- `{{ e.path }}/`: {{ e.bus_factor.name }} made {{ e.bus_factor.share }}% of the changes (`{{ e.bus_factor.evidence[0].ref }}`; {{ e.bus_factor.evidence[0].detail }})
+{% endfor %}
+{% endif %}
 {% else %}
 No directory has enough source or test files for an ownership entry.
 {% endif %}
