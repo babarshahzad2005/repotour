@@ -1,0 +1,118 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+from typer.testing import CliRunner
+
+from repotour.cli import app
+from repotour.config import load_config
+from repotour.git import reader
+from repotour.model.snapshot import FileInfo, RepoSnapshot
+from repotour.model.tour import Overview
+from repotour.pipeline import build_tour
+from repotour.scan.scanner import scan
+from tests.conftest import GoldenCheck
+from tests.fixtures.repos import messy
+
+
+@pytest.fixture(scope="module")
+def messy_root(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    return messy(tmp_path_factory.mktemp("classification")).root
+
+
+@pytest.fixture(scope="module")
+def snapshot(messy_root: Path) -> RepoSnapshot:
+    info = reader.repo_info(messy_root)
+    return scan(info.root, info.head_commit, load_config(info.root))
+
+
+def file(snapshot: RepoSnapshot, path: str) -> FileInfo:
+    return next(f for f in snapshot.files if f.path == path)
+
+
+@pytest.mark.parametrize(
+    ("path", "category", "reason_fragment"),
+    [
+        ("src/app.py", "source", None),
+        ("src/app.test.ts", "test", "test file name"),
+        ("tests/test_app.py", "test", "test directory"),
+        ("checks/smoke.py", "test", "test_patterns"),
+        ("docs/api/index.html", "generated", "linguist-generated"),
+        ("extern/thing.c", "vendored", "linguist-vendored"),
+        ("vendor/ours.go", "source", None),
+        ("vendor/lib.go", "vendored", "vendor/"),
+        ("node_modules/left-pad/index.js", "vendored", "node_modules/"),
+        ("legacy/old.py", "vendored", "exclude"),
+        ("dist/bundle.min.js", "generated", "dist/"),
+        ("package-lock.json", "generated", "lockfile"),
+        ("go.sum", "generated", "lockfile"),
+        ("src/client.go", "generated", "DO NOT EDIT"),
+        ("src/schema.ts", "generated", "@generated"),
+        ("docs/guide.md", "docs", None),
+        ("assets/logo.png", "other", "binary"),
+        ("assets/model.bin", "other", "Git LFS pointer"),
+        ("data/blob.dat", "other", "binary"),
+        ("src/huge.js", "source", "larger than 1 MB"),
+    ],
+)
+def test_category(
+    snapshot: RepoSnapshot, path: str, category: str, reason_fragment: str | None
+) -> None:
+    info = file(snapshot, path)
+
+    assert info.category == category
+    if reason_fragment is None:
+        assert info.reason is None
+    else:
+        assert info.reason is not None
+        assert reason_fragment in info.reason
+
+
+def test_skipped_files_have_no_language(snapshot: RepoSnapshot) -> None:
+    assert file(snapshot, "src/huge.js").language is None
+    assert file(snapshot, "assets/model.bin").language is None
+
+
+def test_explicitly_unvendored_file_keeps_its_language(snapshot: RepoSnapshot) -> None:
+    assert file(snapshot, "vendor/ours.go").language == "Go"
+
+
+def test_submodules_are_listed_not_entered(snapshot: RepoSnapshot) -> None:
+    assert snapshot.submodules == ("libs/sub",)
+    assert not any(f.path.startswith("libs/") for f in snapshot.files)
+
+
+def test_only_unexpected_binaries_and_oversized_files_warn(messy_root: Path) -> None:
+    warnings = build_tour(messy_root).tour.warnings
+
+    assert warnings == (
+        "Skipped binary file: data/blob.dat",
+        "Skipped file larger than 1 MB: src/huge.js",
+    )
+
+
+def test_languages_and_size_exclude_generated_and_vendored(messy_root: Path) -> None:
+    overview = build_tour(messy_root).tour.overview
+    assert isinstance(overview, Overview)
+
+    languages = {s.language: s.files for s in overview.languages}
+    assert languages == {"Python": 3, "Go": 1, "TypeScript": 1}
+    assert overview.size.files == 12
+    assert {e.category: e.count for e in overview.excluded} == {"generated": 6, "vendored": 4}
+
+
+def test_excluded_counts_cite_examples_with_reasons(messy_root: Path) -> None:
+    overview = build_tour(messy_root).tour.overview
+    assert isinstance(overview, Overview)
+
+    vendored = next(e for e in overview.excluded if e.category == "vendored")
+    assert vendored.evidence
+    assert all(e.kind in ("file", "git_attribute", "config") for e in vendored.evidence)
+
+
+def test_messy_golden(messy_root: Path, golden: GoldenCheck) -> None:
+    result = CliRunner().invoke(app, [str(messy_root), "--force"])
+
+    assert result.exit_code == 0, result.output
+    golden("messy", (messy_root / "TOUR.md").read_bytes().decode("utf-8"))

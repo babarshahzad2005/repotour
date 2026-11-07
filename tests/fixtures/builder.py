@@ -47,8 +47,12 @@ class FixtureRepo:
         *,
         author: Author = DEFAULT_AUTHOR,
         date: str = DEFAULT_DATE,
+        gitlinks: dict[str, str] | None = None,
     ) -> str:
-        """Write, overwrite, or delete (None) files, commit them, and return the SHA."""
+        """Write, overwrite, or delete (None) files, commit them, and return the SHA.
+
+        `gitlinks` maps a path to a commit SHA, recorded as a submodule entry.
+        """
         for rel_path, content in files.items():
             target = self.root / rel_path
             if content is None:
@@ -58,6 +62,8 @@ class FixtureRepo:
             data = content.encode("utf-8") if isinstance(content, str) else content
             target.write_bytes(data)
         self._git("add", "--all")
+        for path, sha in (gitlinks or {}).items():
+            self._git("update-index", "--add", "--cacheinfo", f"160000,{sha},{path}")
         env = {
             "GIT_AUTHOR_NAME": author.name,
             "GIT_AUTHOR_EMAIL": author.email,

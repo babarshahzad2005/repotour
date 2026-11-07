@@ -59,10 +59,27 @@ class Size(Claim):
     lines_of_code: int
 
 
+@dataclass(frozen=True, kw_only=True)
+class ExcludedFiles(Claim):
+    """Generated or vendored files left out of every count."""
+
+    category: str  # "generated" or "vendored"
+    count: int
+
+
+@dataclass(frozen=True, kw_only=True)
+class Submodule(Claim):
+    """A git submodule: listed, never entered."""
+
+    path: str
+
+
 @dataclass(frozen=True)
 class Overview:
     size: Size
     languages: tuple[LanguageStat, ...] = ()
+    excluded: tuple[ExcludedFiles, ...] = ()
+    submodules: tuple[Submodule, ...] = ()
 
 
 @dataclass(frozen=True)

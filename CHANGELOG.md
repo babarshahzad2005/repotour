@@ -20,4 +20,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Warnings render in a closing Warnings section and are counted in the CLI summary; `--strict` exits 3 when any warning was produced.
 - Overview section: repository size and a language breakdown, each language citing its largest files. Content is read from the commit, never the working tree.
 - Analyzer pipeline: analyzers run in dependency order; a failing analyzer becomes a warning and an unavailable section instead of stopping the run.
+- File classification: generated and vendored files (from `.gitattributes`, well-known paths, lockfiles, generated-file headers, and config `exclude`) are left out of languages and size and listed with their reasons. Tests are recognized by directory, file name, and config `test_patterns`.
+- Binary files and files over 1 MB are skipped; unexpected ones are reported as warnings. Git LFS pointers count as other files; submodules are listed but never entered.
 - Contributor documentation, code of conduct, security policy, and issue and pull request templates.
