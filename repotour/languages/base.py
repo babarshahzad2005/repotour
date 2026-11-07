@@ -68,6 +68,10 @@ class LanguageAdapter(Protocol):
         """
         ...
 
+    def imported_together(self, target: str, index: Any) -> tuple[str, ...]:
+        """Files reached whenever `target` is imported (a Go package's files)."""
+        ...
+
     def external_name(self, raw: RawImport) -> str:
         """A short name for an external import, for counting (e.g. "os")."""
         ...

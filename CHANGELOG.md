@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Go in the dependency graph and entry points: imports resolve through every `go.mod` module path (covering `go.work` workspaces), linking to one representative file of the imported package (ADR-0005); files of an imported package are never called leaf modules. Entry points: `package main` programs, `ListenAndServe` servers, and each module's root package.
 - JavaScript and TypeScript in the dependency graph and entry points: static `import`/`export ... from`/`require('literal')` (and TypeScript `import x = require()`), resolved through relative paths with extension inference and index files, `tsconfig.json` `paths`/`baseUrl`, and workspace packages; entry points from `package.json` `main`/`module`/`exports`/`bin`, server startup (`.listen()`), and `require.main === module`.
 - Core and leaf modules: Repotour's own deterministic PageRank names the most depended-on modules; modules nothing imports (that are not entry points or empty) are listed as safe places for a first change.
 - Large dependency graphs collapse to directories, one level coarser at a time, to at most `thresholds.graph_max_nodes` (60) nodes; if even the top level is too big, the highest-ranked directories are kept and the rest counted. `--full-graph` (or `full_graph: true`) draws every module.
