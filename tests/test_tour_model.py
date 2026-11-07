@@ -29,7 +29,7 @@ def test_every_claim_in_a_real_tour_has_evidence(tmp_path: Path) -> None:
 
 def test_claim_without_evidence_is_flagged() -> None:
     bare = TextClaim(text="this is an entry point", evidence=())
-    tour = Tour(meta=META, overview=(bare,))
+    tour = Tour(meta=META, reading_order=(bare,))
 
     assert find_unevidenced_claims(tour) == [bare]
 
@@ -44,19 +44,19 @@ def test_nested_claim_without_evidence_is_flagged() -> None:
 
 def test_claims_with_evidence_pass() -> None:
     fact = TextClaim(text="ok", evidence=(Evidence(kind="file", ref="a.py"),))
-    tour = Tour(meta=META, overview=(fact,))
+    tour = Tour(meta=META, reading_order=(fact,))
 
     assert find_unevidenced_claims(tour) == []
 
 
 def test_tour_model_is_json_serializable() -> None:
     fact = TextClaim(text="ok", evidence=(Evidence(kind="import", ref="a.py -> b.py"),))
-    tour = Tour(meta=META, overview=(fact,), warnings=("something was skipped",))
+    tour = Tour(meta=META, reading_order=(fact,), warnings=("something was skipped",))
 
     data = json.loads(json.dumps(tour.to_dict()))
 
     assert data["meta"]["repo_name"] == "demo"
-    assert data["overview"][0]["evidence"][0]["ref"] == "a.py -> b.py"
+    assert data["reading_order"][0]["evidence"][0]["ref"] == "a.py -> b.py"
     assert set(data) == {
         "meta",
         "overview",
@@ -66,5 +66,6 @@ def test_tour_model_is_json_serializable() -> None:
         "ownership",
         "dependency_graph",
         "summaries",
+        "unavailable",
         "warnings",
     }

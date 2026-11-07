@@ -25,3 +25,23 @@ def minimal(parent: Path) -> FixtureRepo:
         date="2024-02-01T12:00:00+00:00",
     )
     return repo
+
+
+def polyglot(parent: Path) -> FixtureRepo:
+    """Several languages plus line-counting edge cases."""
+    repo = FixtureRepo.create(parent, "polyglot")
+    repo.commit(
+        "Add a small multi-language project",
+        {
+            "README.md": "# polyglot\n",
+            "config.yml": "debug: false\n",
+            "server/main.go": "package main\n\nfunc main() {\n}\n",
+            "server/util.go": "package main\n",
+            "web/app.ts": "export const a = 1;\nexport const b = 2;\n",
+            "web/legacy.js": "var x = 1;\r\nvar y = 2;\r\nvar z = 3;\r\n",
+            "tools/build.py": "print('build')",
+            "tools/empty.py": "",
+            "LICENSE": "MIT\n",
+        },
+    )
+    return repo

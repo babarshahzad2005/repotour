@@ -66,7 +66,7 @@ flowchart TB
 - **CLI** parses arguments, loads config, runs the pipeline, writes output, and sets the exit code. It contains no analysis logic.
 - **Config loader** reads `.repotour.yml`, validates it, merges CLI flags on top, and produces a frozen `Config`. Its hash is part of every cache key.
 - **Pipeline orchestrator** builds the `RepoSnapshot`, runs analyzers in dependency order, runs the ranker and optional summarizer, and assembles the `Tour`.
-- **Repo scanner** lists tracked files at `HEAD` (`git ls-files`), computes content hashes and line counts, and asks the classifier to categorize each file.
+- **Repo scanner** lists regular files in the `HEAD` tree (`git ls-tree`) and reads their committed contents in one `git cat-file --batch` call, so uncommitted changes never leak in. It computes content hashes and line counts, and asks the classifier to categorize each file.
 - **File classifier** marks files as source, test, generated, vendored, config, docs, or other, using `.gitattributes` (`linguist-generated`, `linguist-vendored`), known paths (`node_modules/`, `vendor/`, `dist/`, `third_party/`, `*.min.js`, lockfiles), file headers (`Code generated ... DO NOT EDIT`, `@generated`), and config excludes. Test files match paths `test/`, `tests/`, `__tests__/`, `spec/` or names `test_*.py`, `*_test.py`, `*_test.go`, `*.test.{js,ts,jsx,tsx}`, `*.spec.{js,ts,jsx,tsx}`, plus patterns from config. Git LFS pointer files are `other`. Submodules are not entered.
 - **Git reader** is the only module that runs `git`. It returns typed records, never raw output.
 - **Analyzers** each produce one section of the tour (see contracts below).
@@ -182,6 +182,7 @@ repotour/
   git/reader.py
   scan/scanner.py
   scan/classifier.py
+  scan/filetypes.py      # extension -> language and coarse category
   analyzers/overview.py
   analyzers/entry_points.py
   analyzers/history.py
@@ -196,6 +197,8 @@ repotour/
   summarize/summarizer.py
   cache/store.py
   model/tour.py
+  model/snapshot.py      # FileInfo, RepoSnapshot (with committed contents)
+  model/serde.py         # dataclass <-> JSON data, for results, cache, --json
   render/markdown.py
   render/html.py
   render/mermaid.py
