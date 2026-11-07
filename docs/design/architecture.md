@@ -86,19 +86,22 @@ from typing import Literal, Protocol
 
 Category = Literal["source", "test", "generated", "vendored", "config", "docs", "other"]
 
+
 @dataclass(frozen=True)
 class Evidence:
     kind: Literal["file", "commit_range", "import", "config", "git_attribute"]
-    ref: str                 # e.g. "src/app.py", "a1b2c3..d4e5f6", "app.py -> db.py"
+    ref: str  # e.g. "src/app.py", "a1b2c3..d4e5f6", "app.py -> db.py"
     detail: str | None = None
+
 
 @dataclass(frozen=True)
 class FileInfo:
-    path: str                # repo-relative, forward slashes
+    path: str  # repo-relative, forward slashes
     language: str | None
     lines: int
-    content_hash: str        # sha256 of file bytes
+    content_hash: str  # sha256 of file bytes
     category: Category
+
 
 @dataclass(frozen=True)
 class RepoSnapshot:
@@ -107,16 +110,18 @@ class RepoSnapshot:
     files: tuple[FileInfo, ...]
     config: "Config"
 
+
 @dataclass
 class AnalyzerResult:
     analyzer: str
-    data: dict               # analyzer-specific, JSON-serializable
+    data: dict  # analyzer-specific, JSON-serializable
     evidence: list[Evidence] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 
+
 class Analyzer(Protocol):
     name: str
-    version: int             # bump to invalidate this analyzer's cache
+    version: int  # bump to invalidate this analyzer's cache
     depends_on: tuple[str, ...]
 
     def run(
@@ -172,6 +177,7 @@ repotour/
   cli.py
   config.py
   pipeline.py
+  output.py              # writes UTF-8 + LF output on every platform
   git/reader.py
   scan/scanner.py
   scan/classifier.py

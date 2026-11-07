@@ -1,0 +1,65 @@
+[project]
+name = "repotour"
+version = "0.1.0.dev0"
+description = "Generate a codebase tour for new contributors: where to start, what matters, and who to ask."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "M. Babar Shahzad", email = "babarshahzad2005@gmail.com" }]
+requires-python = ">=3.11"
+keywords = ["git", "onboarding", "codebase", "documentation", "cli"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Documentation",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Typing :: Typed",
+]
+dependencies = [
+    "jinja2>=3.1",
+    "typer>=0.12",
+]
+
+[project.urls]
+Homepage = "https://github.com/babarshahzad2005/repotour"
+Repository = "https://github.com/babarshahzad2005/repotour"
+Issues = "https://github.com/babarshahzad2005/repotour/issues"
+
+[project.scripts]
+repotour = "repotour.cli:app"
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.11",
+    "pre-commit>=3.8",
+    "pytest>=8.3",
+    "ruff>=0.6",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "PT", "C4", "PTH"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["repotour", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"

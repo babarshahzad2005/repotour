@@ -1,0 +1,76 @@
+"""The Tour model: the single source of truth that every renderer reads.
+
+The model has no timestamps, so the same commit and config always produce the
+same tour.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Iterator
+from dataclasses import asdict, dataclass, fields, is_dataclass
+from typing import Any, Literal
+
+EvidenceKind = Literal["file", "commit_range", "import", "config", "git_attribute"]
+
+
+@dataclass(frozen=True)
+class Evidence:
+    """A pointer that backs a claim."""
+
+    kind: EvidenceKind
+    ref: str
+    detail: str | None = None
+
+
+@dataclass(frozen=True, kw_only=True)
+class Claim:
+    """Base for every statement the tour makes about the repository.
+
+    A claim without evidence is a bug; see `find_unevidenced_claims`.
+    """
+
+    evidence: tuple[Evidence, ...]
+
+
+@dataclass(frozen=True)
+class Meta:
+    """Facts about the run itself, not claims about the repository."""
+
+    repo_name: str
+    head_commit: str
+    tool_version: str
+
+
+@dataclass(frozen=True)
+class Tour:
+    meta: Meta
+    overview: tuple[Claim, ...] = ()
+    entry_points: tuple[Claim, ...] = ()
+    reading_order: tuple[Claim, ...] = ()
+    hotspots: tuple[Claim, ...] = ()
+    ownership: tuple[Claim, ...] = ()
+    dependency_graph: tuple[Claim, ...] = ()
+    summaries: tuple[Claim, ...] = ()
+    warnings: tuple[str, ...] = ()
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+def find_unevidenced_claims(tour: Tour) -> list[Claim]:
+    """Return every claim in the tour, at any depth, that carries no evidence."""
+    return [claim for claim in _iter_claims(tour) if not claim.evidence]
+
+
+def _iter_claims(node: object) -> Iterator[Claim]:
+    if isinstance(node, Claim):
+        yield node
+    if is_dataclass(node) and not isinstance(node, type):
+        for f in fields(node):
+            yield from _iter_claims(getattr(node, f.name))
+    elif isinstance(node, tuple | list):
+        for item in node:
+            yield from _iter_claims(item)
+    elif isinstance(node, dict):
+        for value in node.values():
+            yield from _iter_claims(value)
