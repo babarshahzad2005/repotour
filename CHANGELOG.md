@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-07
+
+Second milestone (M2): history and ownership.
+
 ### Added
 
 - Hotspots section: the files changed most often in the hotspot window, measured back from HEAD's commit date (`--since`, default 6 months), each citing its commit range. Merge commits, generated and vendored files, and files no longer tracked are left out.
@@ -14,6 +18,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Incremental history: the cache keeps the last toured commit's history, so after pulling only the new commits are read from git; rewritten history is read in full, and changing `--since` never re-reads git. History is kept in one canonical order, so incremental and cold runs give identical tours.
 - Bulk commits (more files than `thresholds.bulk_commit_files`, default 200, or listed in `.git-blame-ignore-revs` or config `ignore_revs`) are left out of the history-based sections, and the tour says how many with examples.
 - Renamed and moved files keep their history: renames are detected in the same `git log` pass and chained to the path at HEAD.
+- `python -m repotour` entry point.
+- Benchmarks on Flask and fzf at pinned commits, run weekly in CI (median of three cold runs: 0.69 s and 1.09 s against a 10 s target).
 
 ## [0.1.0] - 2026-11-07
 
@@ -47,5 +53,6 @@ First milestone (M1): the CLI skeleton and the overview section.
 - Missing basics: the overview flags a missing README, tests, contributing guide, license, or CI configuration, saying what was looked for.
 - Contributor documentation, code of conduct, security policy, and issue and pull request templates.
 
-[Unreleased]: https://github.com/babarshahzad2005/repotour/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/babarshahzad2005/repotour/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/babarshahzad2005/repotour/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/babarshahzad2005/repotour/releases/tag/v0.1.0
