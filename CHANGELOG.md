@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-07
+
+First milestone (M1): the CLI skeleton and the overview section.
+
 ### Fixed
 
 - A top-level directory that holds only submodules is summarized as such instead of "0 files".
@@ -33,3 +37,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Top-level directories with a one-line purpose, taken from a config note, the directory's README, a table of well-known names, or a summary of its files, and showing where each came from. Notes on other paths render as maintainer notes; a note for a missing path is a warning.
 - Missing basics: the overview flags a missing README, tests, contributing guide, license, or CI configuration, saying what was looked for.
 - Contributor documentation, code of conduct, security policy, and issue and pull request templates.
+
+[Unreleased]: https://github.com/babarshahzad2005/repotour/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/babarshahzad2005/repotour/releases/tag/v0.1.0

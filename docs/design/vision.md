@@ -9,9 +9,10 @@ The idea behind Repotour, a codebase tour generator for new contributors.
 ## Core feature 1: The overview
 
 - Detects languages, size, and project type (web app, library, CLI, monorepo) from files like `package.json`, `pyproject.toml`, `go.mod`, and `Dockerfile`
-- Summarizes how to install, run, and test the project from build files, scripts, and CI config
-- Lists the top-level directories with a one-line purpose for each
-- Flags missing basics: no README, no tests, no contributing guide
+- Summarizes how to install, run, and test the project, quoting commands from build files, scripts, and CI config (never inventing them)
+- Lists the top-level directories with a one-line purpose for each, taken from a config note, the directory's README, a well-known name, or its file mix
+- Flags missing basics: no README, no tests, no contributing guide, no license, no CI configuration
+- Leaves generated and vendored files out of every count, and lists them with the reason
 
 ## Core feature 2: Entry points and reading order
 
