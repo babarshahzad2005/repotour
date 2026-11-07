@@ -3,17 +3,25 @@
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Callable
 from functools import cache
 from pathlib import Path
 from types import MappingProxyType
 
+from repotour.cache.history import load_history
 from repotour.config import Config
 from repotour.git import reader
+from repotour.model.history import CommitRecord
 from repotour.model.snapshot import FileInfo, RepoSnapshot
 from repotour.scan.classifier import classify
 
 
-def scan(root: Path, head_commit: str, config: Config) -> RepoSnapshot:
+def scan(
+    root: Path,
+    head_commit: str,
+    config: Config,
+    history_source: Callable[[], tuple[CommitRecord, ...]] | None = None,
+) -> RepoSnapshot:
     listing = reader.list_tree(root, head_commit)
     paths = [e.path for e in listing.files]
     blobs = reader.read_blobs(root, [e.oid for e in listing.files])
@@ -47,7 +55,7 @@ def scan(root: Path, head_commit: str, config: Config) -> RepoSnapshot:
         warnings=tuple(warnings),
         head_timestamp=reader.commit_timestamp(root, head_commit),
         contents=MappingProxyType(contents),
-        history_source=cache(lambda: reader.read_history(root, head_commit)),
+        history_source=cache(history_source or (lambda: load_history(root, head_commit, None))),
     )
 
 

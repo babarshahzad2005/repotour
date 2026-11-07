@@ -19,7 +19,7 @@ from repotour.model.tour import Evidence
 
 CACHE_DIR_NAME = "repotour-cache"
 CACHE_FILE_NAME = "cache.sqlite3"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS analyzer_results (
@@ -29,7 +29,11 @@ CREATE TABLE IF NOT EXISTS analyzer_results (
     config_hash TEXT NOT NULL,
     payload TEXT NOT NULL,
     PRIMARY KEY (analyzer, version, head_commit, config_hash)
-)
+);
+CREATE TABLE IF NOT EXISTS history (
+    tip TEXT PRIMARY KEY,
+    payload BLOB NOT NULL
+);
 """
 
 
@@ -42,7 +46,8 @@ class ResultKey:
 
 
 class CacheStore:
-    """Analyzer results keyed by analyzer name, version, commit, and config hash."""
+    """Analyzer results (keyed by analyzer, version, commit, config hash) and the
+    history records of the latest toured commit."""
 
     def __init__(self, path: Path) -> None:
         self.path = path
@@ -83,6 +88,20 @@ class CacheStore:
                 (key.analyzer, key.version, key.head_commit, key.config_hash, payload),
             )
 
+    def get_history(self) -> tuple[str, bytes] | None:
+        """The cached history: its tip commit and compressed payload, if any."""
+        try:
+            row = self._db.execute("SELECT tip, payload FROM history LIMIT 1").fetchone()
+        except sqlite3.DatabaseError:
+            return None
+        return None if row is None else (row[0], row[1])
+
+    def put_history(self, tip: str, payload: bytes) -> None:
+        """Replace the cached history with the one ending at `tip`."""
+        with contextlib.suppress(sqlite3.DatabaseError), self._db:
+            self._db.execute("DELETE FROM history")
+            self._db.execute("INSERT INTO history VALUES (?, ?)", (tip, payload))
+
     def close(self) -> None:
         self._db.close()
 
@@ -100,8 +119,9 @@ class CacheStore:
             (version,) = db.execute("PRAGMA user_version").fetchone()
             if version != SCHEMA_VERSION:
                 db.execute("DROP TABLE IF EXISTS analyzer_results")
+                db.execute("DROP TABLE IF EXISTS history")
                 db.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
-            db.execute(_SCHEMA)
+            db.executescript(_SCHEMA)
             db.commit()
         except sqlite3.DatabaseError:
             db.close()

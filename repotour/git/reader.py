@@ -83,11 +83,29 @@ _LOG_FORMAT = "--format=%x1e%H%x1f%aN%x1f%aE%x1f%ct"
 
 
 def read_history(root: Path, head: str) -> tuple[CommitRecord, ...]:
-    """History: commits reachable from `head`, merges excluded, newest first.
+    """History: commits reachable from `head`, merges excluded, in git's order.
 
     Authors are normalized through `.mailmap`. Renames are detected repo-wide in
     the same pass (`-M`) and reported as `old_path`; `follow_renames()` links them.
     """
+    return _log(root, head)
+
+
+def read_history_range(root: Path, base: str, head: str) -> tuple[CommitRecord, ...]:
+    """Commits reachable from `head` but not from `base`, merges excluded."""
+    return _log(root, f"{base}..{head}")
+
+
+def is_ancestor(root: Path, ancestor: str, descendant: str) -> bool:
+    """Whether `ancestor` is reachable from `descendant`. Unknown commits are not."""
+    try:
+        _git(root, "merge-base", "--is-ancestor", ancestor, descendant)
+    except GitError:
+        return False
+    return True
+
+
+def _log(root: Path, revisions: str) -> tuple[CommitRecord, ...]:
     raw = _git_bytes(
         root,
         "log",
@@ -97,7 +115,7 @@ def read_history(root: Path, head: str) -> tuple[CommitRecord, ...]:
         "--numstat",
         "-z",
         _LOG_FORMAT,
-        head,
+        revisions,
     )
     return tuple(_parse_commit(c) for c in raw.split(_RECORD) if c.strip(b"\0\n"))
 

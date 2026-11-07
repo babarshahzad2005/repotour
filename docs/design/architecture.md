@@ -145,7 +145,7 @@ The `Tour` model has these sections: `meta` (repo name, head commit, tool versio
 
 - **Analyzer result:** analyzer name, analyzer version, head commit, config hash
 - **Per-file parse result:** content hash, language adapter version
-- **History records:** one record per commit (files changed, lines added and removed, author after mailmap); hotspot windows are computed at query time, so changing `--since` never needs a new git scan
+- **History records:** the latest toured commit's records (files changed, lines added and removed, author after mailmap), stored as one compressed blob. When HEAD descends from the cached tip, only `git log <tip>..HEAD` is read and appended; otherwise history is read in full. Records are kept in canonical order (newest committer date first, ties by SHA), so incremental and cold runs match. Hotspot windows are computed at query time, so changing `--since` never needs a new git scan
 - **LLM summary:** content hash, model name, prompt version
 
 ## CLI surface

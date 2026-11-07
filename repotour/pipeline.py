@@ -21,6 +21,7 @@ from repotour.analyzers.base import Analyzer, AnalyzerResult
 from repotour.analyzers.history import HistoryAnalyzer
 from repotour.analyzers.overview import OverviewAnalyzer
 from repotour.analyzers.ownership import OwnershipAnalyzer
+from repotour.cache.history import load_history
 from repotour.cache.store import CacheStore, ResultKey, cache_path
 from repotour.config import CliOverrides, Config, load_config
 from repotour.git import reader
@@ -85,11 +86,17 @@ def build_tour(
     repo = reader.repo_info(start)
     config = load_config(repo.root, overrides)
 
+    store = CacheStore(cache_path(reader.git_common_dir(repo.root))) if use_cache else None
+
     @cache
     def snapshot() -> RepoSnapshot:
-        return scan(repo.root, repo.head_commit, config)
+        return scan(
+            repo.root,
+            repo.head_commit,
+            config,
+            history_source=lambda: load_history(repo.root, repo.head_commit, store),
+        )
 
-    store = CacheStore(cache_path(reader.git_common_dir(repo.root))) if use_cache else None
     try:
         result_cache = ResultCache(store, repo.head_commit, config.config_hash()) if store else None
         outcome = run_analyzers(snapshot, default_analyzers(), result_cache)
