@@ -14,4 +14,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Any directory inside a repository tours the whole repository.
 - A shallow clone produces the tour with a "history truncated" warning.
 - The CLI notes when uncommitted changes are ignored; the tour always describes HEAD.
+- `.repotour.yml` configuration: `version: 1` required, unknown keys and wrong types exit 2 naming the key, optional `name:` override, and the config hash shown in the tour. See `docs/configuration.md`.
+- `--since` option for the hotspot window, overriding the config file.
 - Contributor documentation, code of conduct, security policy, and issue and pull request templates.

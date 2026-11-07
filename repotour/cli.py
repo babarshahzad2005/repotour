@@ -10,6 +10,7 @@ from typing import Annotated
 
 import typer
 
+from repotour.config import CliOverrides
 from repotour.errors import RepotourError
 from repotour.output import write_text
 from repotour.pipeline import build_tour
@@ -31,9 +32,16 @@ def main(
         Path | None,
         typer.Option("--out", help="Output path. Defaults to TOUR.md at the repository root."),
     ] = None,
+    since: Annotated[
+        str | None,
+        typer.Option(
+            "--since",
+            help="Hotspot window as <n><d|w|m|y>, e.g. 6m. Overrides the config file.",
+        ),
+    ] = None,
 ) -> None:
     try:
-        result = build_tour(path)
+        result = build_tour(path, CliOverrides(since=since))
     except RepotourError as exc:
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(exc.exit_code) from None
