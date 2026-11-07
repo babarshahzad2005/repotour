@@ -70,7 +70,7 @@ class PythonAdapter:
     def handles(self, path: str) -> bool:
         return path.endswith((".py", ".pyi"))
 
-    def parse(self, source: bytes) -> ParseResult:
+    def parse(self, source: bytes, path: str = "") -> ParseResult:
         tree = Parser(_LANGUAGE).parse(source)
         statements = QueryCursor(_STATEMENTS).captures(tree.root_node).get("s", [])
         imports: list[RawImport] = []
@@ -115,7 +115,12 @@ class PythonAdapter:
             declared.extend(_console_scripts(manifest, read(manifest), index))
         return declared
 
-    def build_index(self, paths: Sequence[str], all_paths: Sequence[str]) -> PythonIndex:
+    def build_index(
+        self,
+        paths: Sequence[str],
+        all_paths: Sequence[str],
+        read: Callable[[str], str] | None = None,
+    ) -> PythonIndex:
         roots = {""}
         for path in all_paths:
             pure = PurePosixPath(path)

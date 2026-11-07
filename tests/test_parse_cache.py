@@ -17,9 +17,9 @@ class Parses:
         self.count = 0
         original = PythonAdapter.parse
 
-        def counting(adapter: PythonAdapter, source: bytes):  # type: ignore[no-untyped-def]
+        def counting(adapter: PythonAdapter, source: bytes, path: str = ""):  # type: ignore[no-untyped-def]
             self.count += 1
-            return original(adapter, source)
+            return original(adapter, source, path)
 
         monkeypatch.setattr(PythonAdapter, "parse", counting)
 

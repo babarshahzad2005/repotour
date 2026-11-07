@@ -54,7 +54,7 @@ class RepoSnapshot:
     def parse(self, adapter: Any, path: str) -> Any:
         """The adapter's ParseResult for a tracked file, parsed at most once."""
         if self.parse_source is None:
-            return adapter.parse(self.read_bytes(path))
+            return adapter.parse(self.read_bytes(path), path)
         return self.parse_source(adapter, path)
 
     def history(self) -> tuple[CommitRecord, ...]:
