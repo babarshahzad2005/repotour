@@ -159,9 +159,10 @@ def _purpose(directory: str, snapshot: RepoSnapshot, notes: dict[str, str]) -> D
             ),
         )
     members = [f for f in snapshot.files if f.path.startswith(f"{directory}/")]
+    submodules = [s for s in snapshot.submodules if s.startswith(f"{directory}/")]
     return DirectoryPurpose(
         path=directory,
-        purpose=_summary(members),
+        purpose=_summary(members, len(submodules)),
         evidence=(Evidence(kind="file", ref=f"{directory}/", detail="file categories"),),
     )
 
@@ -176,7 +177,17 @@ def _readme(directory: str, snapshot: RepoSnapshot) -> str | None:
     return candidates[0] if candidates else None
 
 
-def _summary(members: list[FileInfo]) -> str:
+def _summary(members: list[FileInfo], submodules: int = 0) -> str:
+    """E.g. "3 files: 2 source (Go), 1 docs", or "1 submodule"."""
+    pieces = []
+    if members:
+        pieces.append(_file_summary(members))
+    if submodules:
+        pieces.append(f"{submodules} submodule{'' if submodules == 1 else 's'}")
+    return "; ".join(pieces)
+
+
+def _file_summary(members: list[FileInfo]) -> str:
     counts = Counter(f.category for f in members)
     parts = []
     for category in CATEGORY_ORDER:

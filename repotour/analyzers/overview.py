@@ -6,6 +6,7 @@ from collections import defaultdict
 
 from repotour.analyzers import project
 from repotour.analyzers.base import AnalyzerResult
+from repotour.analyzers.basics import find_missing
 from repotour.analyzers.commands import find_commands
 from repotour.analyzers.directories import describe_directories
 from repotour.model.serde import to_data
@@ -26,7 +27,7 @@ EXAMPLES_PER_EXCLUDED_CATEGORY = 3
 
 class OverviewAnalyzer:
     name = "overview"
-    version = 5
+    version = 6
     depends_on: tuple[str, ...] = ()
 
     def run(self, snapshot: RepoSnapshot, inputs: dict[str, AnalyzerResult]) -> AnalyzerResult:
@@ -42,6 +43,7 @@ class OverviewAnalyzer:
             commands=commands,
             directories=directories.purposes,
             notes=directories.notes,
+            missing=find_missing(snapshot),
             excluded=_excluded(snapshot.files),
             submodules=tuple(
                 Submodule(

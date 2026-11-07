@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- A top-level directory that holds only submodules is summarized as such instead of "0 files".
 - Generated-file headers only count inside a comment at the start of a line, so prose that mentions the marker is no longer misclassified.
 
 ### Added
@@ -30,4 +31,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Project types (web app, library, CLI, monorepo) detected from manifests and build files, each with evidence, or "unknown". Monorepo packages from npm/pnpm workspaces, `go.work`, Cargo workspaces, or manifests in several top-level directories.
 - "How to work on it": install, run, and test commands quoted from Makefile/justfile targets, package.json scripts, pyproject task runners, tox, nox, and GitHub Actions steps, each citing its source; the highest-priority source wins per purpose, and the tour says so when none are found.
 - Top-level directories with a one-line purpose, taken from a config note, the directory's README, a table of well-known names, or a summary of its files, and showing where each came from. Notes on other paths render as maintainer notes; a note for a missing path is a warning.
+- Missing basics: the overview flags a missing README, tests, contributing guide, license, or CI configuration, saying what was looked for.
 - Contributor documentation, code of conduct, security policy, and issue and pull request templates.
