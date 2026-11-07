@@ -22,4 +22,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Analyzer pipeline: analyzers run in dependency order; a failing analyzer becomes a warning and an unavailable section instead of stopping the run.
 - File classification: generated and vendored files (from `.gitattributes`, well-known paths, lockfiles, generated-file headers, and config `exclude`) are left out of languages and size and listed with their reasons. Tests are recognized by directory, file name, and config `test_patterns`.
 - Binary files and files over 1 MB are skipped; unexpected ones are reported as warnings. Git LFS pointers count as other files; submodules are listed but never entered.
+- Analysis cache in the git common directory (shared by worktrees, never tracked, safe to delete): re-running on the same commit and config renders without re-scanning. `--no-cache` neither reads nor writes it.
 - Contributor documentation, code of conduct, security policy, and issue and pull request templates.

@@ -65,6 +65,12 @@ def repo_info(start: Path) -> RepoInfo:
     return RepoInfo(root=root, head_commit=head, is_shallow=shallow, has_uncommitted_changes=dirty)
 
 
+def git_common_dir(root: Path) -> Path:
+    """The `.git` directory shared by all worktrees of the repository at `root`."""
+    raw = Path(_git(root, "rev-parse", "--git-common-dir").strip())
+    return raw if raw.is_absolute() else (root / raw).resolve()
+
+
 @dataclass(frozen=True)
 class TreeEntry:
     """A regular file (not a symlink or submodule) in a commit's tree."""

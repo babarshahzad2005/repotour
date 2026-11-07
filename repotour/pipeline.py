@@ -3,17 +3,22 @@ and assemble their results.
 
 Failures stay local: an analyzer that raises becomes a warning and an
 unavailable section, and analyzers that depend on it are skipped.
+
+Results are cached per analyzer, version, commit, and config hash. The scan
+is lazy, so a fully cached commit is rendered without reading the tree.
 """
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
+from functools import cache
 from pathlib import Path
 
 from repotour import __version__
 from repotour.analyzers.base import Analyzer, AnalyzerResult
 from repotour.analyzers.overview import OverviewAnalyzer
+from repotour.cache.store import CacheStore, ResultKey, cache_path
 from repotour.config import CliOverrides, Config, load_config
 from repotour.git import reader
 from repotour.model.serde import from_data
@@ -46,11 +51,41 @@ class PipelineResult:
     has_uncommitted_changes: bool
 
 
-def build_tour(start: Path, overrides: CliOverrides | None = None) -> PipelineResult:
+@dataclass(frozen=True)
+class ResultCache:
+    """The cache as seen by one run: a store plus this run's commit and config."""
+
+    store: CacheStore
+    head_commit: str
+    config_hash: str
+
+    def key(self, analyzer: Analyzer) -> ResultKey:
+        return ResultKey(analyzer.name, analyzer.version, self.head_commit, self.config_hash)
+
+    def get(self, analyzer: Analyzer) -> AnalyzerResult | None:
+        return self.store.get(self.key(analyzer))
+
+    def put(self, analyzer: Analyzer, result: AnalyzerResult) -> None:
+        self.store.put(self.key(analyzer), result)
+
+
+def build_tour(
+    start: Path, overrides: CliOverrides | None = None, *, use_cache: bool = True
+) -> PipelineResult:
     repo = reader.repo_info(start)
     config = load_config(repo.root, overrides)
-    snapshot = scan(repo.root, repo.head_commit, config)
-    outcome = run_analyzers(snapshot, default_analyzers())
+
+    @cache
+    def snapshot() -> RepoSnapshot:
+        return scan(repo.root, repo.head_commit, config)
+
+    store = CacheStore(cache_path(reader.git_common_dir(repo.root))) if use_cache else None
+    try:
+        result_cache = ResultCache(store, repo.head_commit, config.config_hash()) if store else None
+        outcome = run_analyzers(snapshot, default_analyzers(), result_cache)
+    finally:
+        if store is not None:
+            store.close()
 
     meta = Meta(
         repo_name=config.name or repo.root.name,
@@ -74,7 +109,16 @@ def build_tour(start: Path, overrides: CliOverrides | None = None) -> PipelineRe
     )
 
 
-def run_analyzers(snapshot: RepoSnapshot, analyzers: Sequence[Analyzer]) -> AnalysisOutcome:
+def run_analyzers(
+    snapshot: RepoSnapshot | Callable[[], RepoSnapshot],
+    analyzers: Sequence[Analyzer],
+    result_cache: ResultCache | None = None,
+) -> AnalysisOutcome:
+    """Run analyzers in dependency order, reusing cached results.
+
+    `snapshot` may be a callable, called only if some analyzer must run.
+    """
+    get_snapshot = snapshot if callable(snapshot) else (lambda: snapshot)
     results: dict[str, AnalyzerResult] = {}
     unavailable: list[str] = []
     warnings: list[str] = []
@@ -84,13 +128,20 @@ def run_analyzers(snapshot: RepoSnapshot, analyzers: Sequence[Analyzer]) -> Anal
             unavailable.append(analyzer.name)
             warnings.append(f"{analyzer.name}: section unavailable (needs {', '.join(missing)})")
             continue
+        cached = result_cache.get(analyzer) if result_cache else None
+        if cached is not None:
+            results[analyzer.name] = cached
+            warnings.extend(cached.warnings)
+            continue
         inputs = {d: results[d] for d in analyzer.depends_on}
         try:
-            result = analyzer.run(snapshot, inputs)
+            result = analyzer.run(get_snapshot(), inputs)
         except Exception as exc:
             unavailable.append(analyzer.name)
             warnings.append(f"{analyzer.name}: section unavailable ({type(exc).__name__}: {exc})")
             continue
+        if result_cache is not None:
+            result_cache.put(analyzer, result)
         results[analyzer.name] = result
         warnings.extend(result.warnings)
     return AnalysisOutcome(

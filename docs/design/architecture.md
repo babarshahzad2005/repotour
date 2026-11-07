@@ -73,7 +73,7 @@ flowchart TB
 - **Language adapters** hold per-language tree-sitter queries for imports and entry-point patterns. Adding a language means adding one adapter, nothing else.
 - **Reading-order ranker** combines entry points, the dependency graph, and hotspots into the "start here" list.
 - **LLM summarizer** produces one-paragraph summaries of key files. Off by default; the only component allowed to use the network.
-- **Cache** stores analyzer results, per-file parse results, per-commit history records, and LLM summaries.
+- **Cache** stores analyzer results, per-file parse results, per-commit history records, and LLM summaries. A cache that cannot be read is rebuilt, never fatal. The scan is lazy: when every analyzer result is cached, the tree is not read at all.
 - **Renderers** turn a `Tour` into Markdown, HTML, or Mermaid text. Pure functions: no git, no parsing, no network.
 - **GitHub Action** is a composite action that installs a pinned `repotour` from PyPI: runs on `release: published` and `workflow_dispatch`, regenerates the tour, and opens or updates a PR from branch `repotour/update-tour` against the default branch if it changed.
 
