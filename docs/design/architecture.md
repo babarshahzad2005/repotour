@@ -178,6 +178,7 @@ repotour/
   config.py
   pipeline.py
   output.py              # writes UTF-8 + LF output on every platform
+  errors.py              # run-stopping errors, each with its exit code
   git/reader.py
   scan/scanner.py
   scan/classifier.py
