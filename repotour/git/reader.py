@@ -65,6 +65,51 @@ def repo_info(start: Path) -> RepoInfo:
     return RepoInfo(root=root, head_commit=head, is_shallow=shallow, has_uncommitted_changes=dirty)
 
 
+@dataclass(frozen=True)
+class TreeEntry:
+    """A regular file (not a symlink or submodule) in a commit's tree."""
+
+    path: str
+    oid: str
+
+
+_REGULAR_FILE_MODES = (b"100644", b"100755")
+
+
+def list_tree(root: Path, commit: str) -> list[TreeEntry]:
+    """Every regular file in `commit`, sorted by path."""
+    raw = _git_bytes(root, "ls-tree", "-r", "-z", "--full-tree", commit)
+    entries = []
+    for record in raw.split(b"\0"):
+        if not record:
+            continue
+        meta, _, path = record.partition(b"\t")
+        mode, kind, oid = meta.split(b" ")
+        if kind == b"blob" and mode in _REGULAR_FILE_MODES:
+            entries.append(TreeEntry(path=path.decode("utf-8", "replace"), oid=oid.decode()))
+    return sorted(entries, key=lambda e: e.path)
+
+
+def read_blobs(root: Path, oids: list[str]) -> dict[str, bytes]:
+    """Contents of the given blobs, read in one `git cat-file --batch` call."""
+    unique = sorted(set(oids))
+    if not unique:
+        return {}
+    raw = _git_bytes(root, "cat-file", "--batch", stdin="".join(f"{o}\n" for o in unique).encode())
+    blobs: dict[str, bytes] = {}
+    pos = 0
+    while pos < len(raw):
+        header_end = raw.index(b"\n", pos)
+        oid, kind, size = raw[pos:header_end].split(b" ")
+        if kind != b"blob":
+            raise GitError(f"expected a blob for {oid.decode()}, got {kind.decode()}")
+        start = header_end + 1
+        end = start + int(size)
+        blobs[oid.decode()] = raw[start:end]
+        pos = end + 1
+    return blobs
+
+
 def _fmt(version: GitVersion) -> str:
     return ".".join(str(part) for part in version)
 
@@ -83,4 +128,17 @@ def _git(cwd: Path, *args: str) -> str:
         raise RepositoryError("git is not installed or not on PATH") from None
     except subprocess.CalledProcessError as exc:
         raise GitError(exc.stderr.strip() or f"git {' '.join(args)} failed") from exc
+    return result.stdout
+
+
+def _git_bytes(cwd: Path, *args: str, stdin: bytes | None = None) -> bytes:
+    try:
+        result = subprocess.run(
+            [GIT_EXECUTABLE, *args], cwd=cwd, input=stdin, capture_output=True, check=True
+        )
+    except FileNotFoundError:
+        raise RepositoryError("git is not installed or not on PATH") from None
+    except subprocess.CalledProcessError as exc:
+        message = exc.stderr.decode("utf-8", "replace").strip()
+        raise GitError(message or f"git {' '.join(args)} failed") from exc
     return result.stdout

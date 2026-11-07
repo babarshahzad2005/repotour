@@ -42,16 +42,40 @@ class Meta:
     config_hash: str
 
 
+@dataclass(frozen=True, kw_only=True)
+class LanguageStat(Claim):
+    """A programming language's share of the repository."""
+
+    language: str
+    files: int
+    lines: int
+
+
+@dataclass(frozen=True, kw_only=True)
+class Size(Claim):
+    """How big the repository is at the tour's commit."""
+
+    files: int
+    lines_of_code: int
+
+
+@dataclass(frozen=True)
+class Overview:
+    size: Size
+    languages: tuple[LanguageStat, ...] = ()
+
+
 @dataclass(frozen=True)
 class Tour:
     meta: Meta
-    overview: tuple[Claim, ...] = ()
+    overview: Overview | None = None
     entry_points: tuple[Claim, ...] = ()
     reading_order: tuple[Claim, ...] = ()
     hotspots: tuple[Claim, ...] = ()
     ownership: tuple[Claim, ...] = ()
     dependency_graph: tuple[Claim, ...] = ()
     summaries: tuple[Claim, ...] = ()
+    unavailable: tuple[str, ...] = ()  # sections whose analyzer failed
     warnings: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:

@@ -26,3 +26,16 @@ def test_meta_appears_in_markdown() -> None:
     assert "demo" in text
     assert "a" * 40 in text
     assert "1.2.3" in text
+
+
+def test_unavailable_overview_points_to_warnings() -> None:
+    tour = Tour(
+        meta=TOUR.meta,
+        unavailable=("overview",),
+        warnings=("overview: section unavailable (RuntimeError: boom)",),
+    )
+
+    text = render_markdown(tour)
+
+    assert "_Unavailable: see Warnings._" in text
+    assert "- overview: section unavailable (RuntimeError: boom)" in text
