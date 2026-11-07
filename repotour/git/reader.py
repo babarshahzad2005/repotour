@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from repotour.errors import RepositoryError
+from repotour.model.history import CommitRecord, FileChange
 
 GIT_EXECUTABLE = "git"
 MIN_GIT_VERSION = (2, 30, 0)
@@ -69,6 +70,59 @@ def git_common_dir(root: Path) -> Path:
     """The `.git` directory shared by all worktrees of the repository at `root`."""
     raw = Path(_git(root, "rev-parse", "--git-common-dir").strip())
     return raw if raw.is_absolute() else (root / raw).resolve()
+
+
+def commit_timestamp(root: Path, commit: str) -> int:
+    """Committer date of `commit` as a Unix timestamp."""
+    return int(_git(root, "show", "-s", "--format=%ct", commit).strip())
+
+
+_RECORD = b"\x1e"
+_FIELD = b"\x1f"
+_LOG_FORMAT = "--format=%x1e%H%x1f%aN%x1f%aE%x1f%ct"
+
+
+def read_history(root: Path, head: str) -> tuple[CommitRecord, ...]:
+    """History: commits reachable from `head`, merges excluded, newest first.
+
+    Authors are normalized through `.mailmap`. Renames are not followed here.
+    """
+    raw = _git_bytes(
+        root,
+        "log",
+        "--no-merges",
+        "--use-mailmap",
+        "--no-renames",
+        "--numstat",
+        "-z",
+        _LOG_FORMAT,
+        head,
+    )
+    return tuple(_parse_commit(c) for c in raw.split(_RECORD) if c.strip(b"\0\n"))
+
+
+def _parse_commit(chunk: bytes) -> CommitRecord:
+    header, _, body = chunk.partition(b"\0")
+    sha, name, email, timestamp = (f.decode("utf-8", "replace") for f in header.split(_FIELD))
+    files = []
+    for entry in body.lstrip(b"\n").split(b"\0"):
+        if not entry:
+            continue
+        added, removed, path = entry.split(b"\t", 2)
+        files.append(
+            FileChange(
+                path=path.decode("utf-8", "replace"),
+                added=None if added == b"-" else int(added),
+                removed=None if removed == b"-" else int(removed),
+            )
+        )
+    return CommitRecord(
+        sha=sha,
+        author_name=name,
+        author_email=email,
+        timestamp=int(timestamp),
+        files=tuple(files),
+    )
 
 
 @dataclass(frozen=True)

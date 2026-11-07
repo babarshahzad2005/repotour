@@ -79,6 +79,24 @@ class CliOverrides:
     since: str | None = None
 
 
+_DAYS_PER_UNIT = {"d": 1, "w": 7, "m": 30, "y": 365}
+
+
+def duration_days(duration: str) -> int:
+    """Days in a validated duration such as `6m` (a month is 30 days)."""
+    return int(duration[:-1]) * _DAYS_PER_UNIT[duration[-1]]
+
+
+_UNIT_NAMES = {"d": "day", "w": "week", "m": "month", "y": "year"}
+
+
+def describe_duration(duration: str) -> str:
+    """`6m` -> `6 months`, `1y` -> `1 year`."""
+    count = int(duration[:-1])
+    unit = _UNIT_NAMES[duration[-1]]
+    return f"{count} {unit}{'' if count == 1 else 's'}"
+
+
 def load_config(root: Path, overrides: CliOverrides | None = None) -> Config:
     path = root / CONFIG_FILE
     config = _parse(path.read_text(encoding="utf-8")) if path.exists() else Config()

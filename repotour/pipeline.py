@@ -14,16 +14,18 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from functools import cache
 from pathlib import Path
+from typing import Any
 
 from repotour import __version__
 from repotour.analyzers.base import Analyzer, AnalyzerResult
+from repotour.analyzers.history import HistoryAnalyzer
 from repotour.analyzers.overview import OverviewAnalyzer
 from repotour.cache.store import CacheStore, ResultKey, cache_path
 from repotour.config import CliOverrides, Config, load_config
 from repotour.git import reader
 from repotour.model.serde import from_data
 from repotour.model.snapshot import RepoSnapshot
-from repotour.model.tour import Meta, Overview, Tour
+from repotour.model.tour import HotspotsSection, Meta, Overview, Tour
 from repotour.scan.scanner import scan
 
 SHALLOW_WARNING = (
@@ -31,9 +33,15 @@ SHALLOW_WARNING = (
     "only cover the commits that were fetched."
 )
 
+# Which Tour field each analyzer's result fills, and the model type it holds.
+SECTIONS: dict[str, tuple[str, type]] = {
+    "overview": ("overview", Overview),
+    "history": ("hotspots", HotspotsSection),
+}
+
 
 def default_analyzers() -> list[Analyzer]:
-    return [OverviewAnalyzer()]
+    return [OverviewAnalyzer(), HistoryAnalyzer()]
 
 
 @dataclass(frozen=True)
@@ -94,13 +102,12 @@ def build_tour(
         config_hash=config.config_hash(),
     )
     warnings = ((SHALLOW_WARNING,) if repo.is_shallow else ()) + outcome.warnings
-    overview = outcome.results.get("overview")
-    tour = Tour(
-        meta=meta,
-        overview=from_data(Overview, overview.data) if overview else None,
-        unavailable=outcome.unavailable,
-        warnings=warnings,
-    )
+    sections: dict[str, Any] = {
+        field_name: from_data(model, outcome.results[name].data)
+        for name, (field_name, model) in SECTIONS.items()
+        if name in outcome.results
+    }
+    tour = Tour(meta=meta, unavailable=outcome.unavailable, warnings=warnings, **sections)
     return PipelineResult(
         root=repo.root,
         config=config,
