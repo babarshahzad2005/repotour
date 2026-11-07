@@ -278,3 +278,67 @@ def team(parent: Path) -> FixtureRepo:
         "Docs", {"README.md": "# team\n\nHello.\n"}, author=ADA, date="2024-12-01T10:00:00+00:00"
     )
     return repo
+
+
+def history_showcase(parent: Path) -> FixtureRepo:
+    """Every history and ownership feature at once: the M2 acceptance fixture."""
+    repo = FixtureRepo.create(parent, "history-showcase")
+    old_ada = Author("ada", "ada@old.example.com")
+    dependabot = Author("dependabot[bot]", "bot@example.com")
+    engine = "".join(f"step{i}\n" for i in range(10))
+    repo.commit(
+        "Start with the legacy module",
+        {
+            ".mailmap": "Ada Lovelace <ada@example.com> <ada@old.example.com>\n",
+            ".repotour.yml": "version: 1\nbots: [release-robot]\n",
+            "README.md": "# history showcase\n",
+            **{f"legacy/l{i}.py": f"legacy = {i}\n" for i in range(1, 6)},
+        },
+        author=ADA,
+        date="2022-01-01T10:00:00+00:00",
+    )
+    repo.commit(
+        "Start core",
+        {"core/old_engine.py": engine, **{f"core/c{i}.py": f"c = {i}\n" for i in range(1, 5)}},
+        author=old_ada,
+        date="2024-06-01T10:00:00+00:00",
+    )
+    repo.commit(
+        "Rename the engine",
+        {"core/old_engine.py": None, "core/engine.py": engine + "step10\n"},
+        author=ADA,
+        date="2024-06-05T10:00:00+00:00",
+    )
+    for day in range(1, 10):
+        repo.commit(
+            f"Tune the engine ({day})",
+            {"core/engine.py": engine + f"tuned{day}\n"},
+            author=ADA,
+            date=f"2024-07-{day:02d}T10:00:00+00:00",
+        )
+    repo.commit(
+        "Start web",
+        {f"web/w{i}.py": f"w = {i}\n" for i in range(1, 6)},
+        author=GRACE,
+        date="2024-09-01T10:00:00+00:00",
+    )
+    repo.commit("Fix w2", {"web/w2.py": "w = 22\n"}, author=LINUS, date="2024-10-01T10:00:00+00:00")
+    repo.commit(
+        "Bump", {"web/w1.py": "w = 11\n"}, author=dependabot, date="2024-10-05T10:00:00+00:00"
+    )
+    reformat = repo.commit(
+        "Reformat web",
+        {f"web/w{i}.py": f"w  =  {i}\n" for i in range(1, 6)},
+        author=GRACE,
+        date="2024-10-10T10:00:00+00:00",
+    )
+    repo.commit(
+        "Ignore the reformat",
+        {".git-blame-ignore-revs": f"# whitespace only\n{reformat}\n"},
+        author=ADA,
+        date="2024-11-01T10:00:00+00:00",
+    )
+    repo.commit(
+        "Polish w3", {"web/w3.py": "w = 33\n"}, author=LINUS, date="2024-12-01T10:00:00+00:00"
+    )
+    return repo
