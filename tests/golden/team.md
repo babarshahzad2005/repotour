@@ -51,10 +51,10 @@ Files changed most often in the 6 months before HEAD (2024-06-04 to 2024-12-01).
 
 Who has changed each area most, by share of changed lines across history (bulk commits and bots left out). Contacts committed to the area in the 12 months before HEAD.
 
-| Directory | Top authors | Contacts |
-|---|---|---|
-| `core/` | Ada Lovelace 94% (`46a2781d4152..527cc6e386fd`), Grace Hopper 6% (`e55647e24c4f`) | Grace Hopper |
-| `deep/` | Grace Hopper 100% (`310da4c98f92`) | Grace Hopper |
-| `deep/a/` | Grace Hopper 100% (`310da4c98f92`) | Grace Hopper |
-| `web/` | Linus Ops 60% (`02b01fb74860..9007c71394a0`), Grace Hopper 40% (`7bd633d37800`) | Linus Ops, Grace Hopper |
-| `web/api/` | Linus Ops 100% (`9007c71394a0`) | Linus Ops |
+| Directory | Top authors | Contacts | Activity |
+|---|---|---|---|
+| `core/` | Ada Lovelace 94% (`46a2781d4152..527cc6e386fd`), Grace Hopper 6% (`e55647e24c4f`) | Grace Hopper | - |
+| `deep/` | Grace Hopper 100% (`310da4c98f92`) | Grace Hopper | active (last change on 2024-07-01) |
+| `deep/a/` | Grace Hopper 100% (`310da4c98f92`) | Grace Hopper | active (last change on 2024-07-01) |
+| `web/` | Linus Ops 60% (`02b01fb74860..9007c71394a0`), Grace Hopper 40% (`7bd633d37800`) | Linus Ops, Grace Hopper | active (last change on 2024-11-02) |
+| `web/api/` | Linus Ops 100% (`9007c71394a0`) | Linus Ops | active (last change on 2024-11-02) |
