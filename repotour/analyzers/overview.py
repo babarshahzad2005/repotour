@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 
+from repotour.analyzers import project
 from repotour.analyzers.base import AnalyzerResult
 from repotour.model.serde import to_data
 from repotour.model.snapshot import FileInfo, RepoSnapshot
@@ -23,14 +24,17 @@ EXAMPLES_PER_EXCLUDED_CATEGORY = 3
 
 class OverviewAnalyzer:
     name = "overview"
-    version = 2
+    version = 3
     depends_on: tuple[str, ...] = ()
 
     def run(self, snapshot: RepoSnapshot, inputs: dict[str, AnalyzerResult]) -> AnalyzerResult:
         counted = tuple(f for f in snapshot.files if not f.is_excluded)
+        detection = project.detect(snapshot)
         overview = Overview(
             size=_size(snapshot, counted),
             languages=_languages(counted),
+            project_types=detection.types,
+            packages=detection.packages,
             excluded=_excluded(snapshot.files),
             submodules=tuple(
                 Submodule(
@@ -41,7 +45,9 @@ class OverviewAnalyzer:
             ),
         )
         return AnalyzerResult(
-            analyzer=self.name, data=to_data(overview), warnings=list(snapshot.warnings)
+            analyzer=self.name,
+            data=to_data(overview),
+            warnings=[*snapshot.warnings, *detection.warnings],
         )
 
 
