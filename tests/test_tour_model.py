@@ -1,0 +1,70 @@
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass
+from pathlib import Path
+
+from repotour.model.tour import Claim, Evidence, Meta, Tour, find_unevidenced_claims
+from repotour.pipeline import build_tour
+from tests.fixtures.repos import minimal
+
+META = Meta(repo_name="demo", head_commit="0" * 40, tool_version="0.0.0")
+
+
+@dataclass(frozen=True, kw_only=True)
+class Fact(Claim):
+    text: str
+
+
+@dataclass(frozen=True, kw_only=True)
+class Group(Claim):
+    members: tuple[Fact, ...]
+
+
+def test_every_claim_in_a_real_tour_has_evidence(tmp_path: Path) -> None:
+    tour = build_tour(minimal(tmp_path).root).tour
+
+    assert find_unevidenced_claims(tour) == []
+
+
+def test_claim_without_evidence_is_flagged() -> None:
+    bare = Fact(text="this is an entry point", evidence=())
+    tour = Tour(meta=META, overview=(bare,))
+
+    assert find_unevidenced_claims(tour) == [bare]
+
+
+def test_nested_claim_without_evidence_is_flagged() -> None:
+    bare = Fact(text="nested", evidence=())
+    group = Group(members=(bare,), evidence=(Evidence(kind="file", ref="a.py"),))
+    tour = Tour(meta=META, entry_points=(group,))
+
+    assert find_unevidenced_claims(tour) == [bare]
+
+
+def test_claims_with_evidence_pass() -> None:
+    fact = Fact(text="ok", evidence=(Evidence(kind="file", ref="a.py"),))
+    tour = Tour(meta=META, overview=(fact,))
+
+    assert find_unevidenced_claims(tour) == []
+
+
+def test_tour_model_is_json_serializable() -> None:
+    fact = Fact(text="ok", evidence=(Evidence(kind="import", ref="a.py -> b.py"),))
+    tour = Tour(meta=META, overview=(fact,), warnings=("something was skipped",))
+
+    data = json.loads(json.dumps(tour.to_dict()))
+
+    assert data["meta"]["repo_name"] == "demo"
+    assert data["overview"][0]["evidence"][0]["ref"] == "a.py -> b.py"
+    assert set(data) == {
+        "meta",
+        "overview",
+        "entry_points",
+        "reading_order",
+        "hotspots",
+        "ownership",
+        "dependency_graph",
+        "summaries",
+        "warnings",
+    }
