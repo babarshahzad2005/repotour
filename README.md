@@ -12,6 +12,10 @@ Repotour is a CLI that analyzes a git repository and writes a tour for someone s
 - [Glossary](GLOSSARY.md): the project's vocabulary
 - [Architecture decision records](docs/adr/)
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Please follow the [Code of Conduct](CODE_OF_CONDUCT.md), and report security issues as described in [SECURITY.md](SECURITY.md).
+
 ## License
 
 [MIT](LICENSE)

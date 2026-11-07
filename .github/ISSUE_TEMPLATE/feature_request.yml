@@ -1,0 +1,22 @@
+name: Feature request
+description: Suggest an improvement to the tour or the tool
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the newcomer question or maintainer need that isn't served today.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: What evidence would back it?
+      description: Every claim in a tour points to evidence (a file, a commit range, an import). What would this feature cite?

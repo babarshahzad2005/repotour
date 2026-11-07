@@ -1,0 +1,45 @@
+name: Bug report
+description: Something in Repotour doesn't work as expected
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you ran, what you expected, and what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: Ideally a public repository and commit where it happens, plus the exact command.
+      placeholder: |
+        1. git clone https://github.com/example/project && git -C project checkout <sha>
+        2. repotour project
+    validations:
+      required: true
+  - type: textarea
+    id: wrong-claim
+    attributes:
+      label: Wrong claim (if any)
+      description: If the tour said something wrong, paste the claim and its evidence.
+  - type: input
+    id: version
+    attributes:
+      label: Repotour version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [Linux, macOS, Windows]
+    validations:
+      required: true
+  - type: input
+    id: git-version
+    attributes:
+      label: git version
+      placeholder: "2.45.0"
