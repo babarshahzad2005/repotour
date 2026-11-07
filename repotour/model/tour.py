@@ -159,6 +159,38 @@ class HotspotsSection:
     bulk: BulkCommits | None = None
 
 
+@dataclass(frozen=True, kw_only=True)
+class AuthorShare(Claim):
+    """An author's share of the changed lines in a directory."""
+
+    name: str  # never an email
+    lines: int
+    share: int  # percent, rounded half up
+    commits: int
+
+
+@dataclass(frozen=True, kw_only=True)
+class Contact(Claim):
+    """An owner who committed to the directory recently enough to ask."""
+
+    name: str
+    last_commit: str  # ISO date (UTC)
+
+
+@dataclass(frozen=True)
+class OwnershipEntry:
+    path: str
+    total_lines: int
+    authors: tuple[AuthorShare, ...] = ()
+    contacts: tuple[Contact, ...] = ()
+
+
+@dataclass(frozen=True)
+class OwnershipSection:
+    contact_window: str  # e.g. "12 months"
+    entries: tuple[OwnershipEntry, ...] = ()
+
+
 @dataclass(frozen=True)
 class Tour:
     meta: Meta
@@ -166,7 +198,7 @@ class Tour:
     entry_points: tuple[Claim, ...] = ()
     reading_order: tuple[Claim, ...] = ()
     hotspots: HotspotsSection | None = None
-    ownership: tuple[Claim, ...] = ()
+    ownership: OwnershipSection | None = None
     dependency_graph: tuple[Claim, ...] = ()
     summaries: tuple[Claim, ...] = ()
     unavailable: tuple[str, ...] = ()  # sections whose analyzer failed

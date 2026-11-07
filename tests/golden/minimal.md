@@ -37,3 +37,7 @@ Files changed most often in the 6 months before HEAD (2023-08-05 to 2024-02-01).
 | `app/__init__.py` | 1 | `b79b7a297a83` (1 commit on 2024-01-01) |
 | `app/greet.py` | 1 | `705755384d2d` (1 commit on 2024-02-01) |
 | `app/main.py` | 1 | `b79b7a297a83` (1 commit on 2024-01-01) |
+
+## Ownership
+
+No directory has enough source or test files for an ownership entry.

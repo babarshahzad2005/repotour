@@ -36,3 +36,7 @@ Files changed most often in the 6 months before HEAD (2023-07-05 to 2024-01-01).
 | `.github/workflows/ci.yml` | 1 | `a118e7a70aae` (1 commit on 2024-01-01) |
 | `Makefile` | 1 | `a118e7a70aae` (1 commit on 2024-01-01) |
 | `package.json` | 1 | `a118e7a70aae` (1 commit on 2024-01-01) |
+
+## Ownership
+
+No directory has enough source or test files for an ownership entry.

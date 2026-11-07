@@ -197,3 +197,84 @@ def history(parent: Path) -> FixtureRepo:
     repo.switch("main")
     repo.merge("feature", "Merge feature", author=ADA, date="2024-12-28T10:00:00+00:00")
     return repo
+
+
+def _lines(prefix: str, count: int) -> str:
+    return "".join(f"{prefix}{i}\n" for i in range(count))
+
+
+def team(parent: Path) -> FixtureRepo:
+    """Ownership with known shares; see tests/test_ownership.py for the arithmetic."""
+    repo = FixtureRepo.create(parent, "team")
+    old_ada = Author("ada", "ada@old.example.com")
+    dependabot = Author("dependabot[bot]", "bot@example.com")
+    robot = Author("release-robot", "robot@example.com")
+    repo.commit(
+        "Start core",
+        {
+            ".mailmap": "Ada Lovelace <ada@example.com> <ada@old.example.com>\n",
+            ".repotour.yml": "version: 1\nbots: [release-robot]\n",
+            "README.md": "# team\n",
+            **{f"core/c{i}.py": _lines(f"c{i}_", 10) for i in range(1, 7)},
+        },
+        author=ADA,
+        date="2023-01-01T10:00:00+00:00",
+    )
+    repo.commit(
+        "Rewrite c1",
+        {"core/c1.py": _lines("new_", 10)},
+        author=old_ada,
+        date="2023-02-01T10:00:00+00:00",
+    )
+    repo.commit(
+        "Start web",
+        {f"web/w{i}.py": _lines(f"w{i}_", 4) for i in range(1, 6)},
+        author=GRACE,
+        date="2024-03-01T10:00:00+00:00",
+    )
+    repo.commit(
+        "Extend c2",
+        {"core/c2.py": _lines("c2_", 15)},
+        author=GRACE,
+        date="2024-06-01T10:00:00+00:00",
+    )
+    repo.commit(
+        "Bump deps",
+        {"core/c3.py": _lines("c3_", 110)},
+        author=dependabot,
+        date="2024-06-02T10:00:00+00:00",
+    )
+    repo.commit(
+        "Release",
+        {"core/c4.py": _lines("c4_", 60)},
+        author=robot,
+        date="2024-06-03T10:00:00+00:00",
+    )
+    repo.commit(
+        "Deep work",
+        {f"deep/a/b/x{i}.py": "x\n" for i in range(1, 6)},
+        author=GRACE,
+        date="2024-07-01T10:00:00+00:00",
+    )
+    repo.commit(
+        "Small things",
+        {"tiny/t1.py": "t\n", "tiny/t2.py": "t\n"},
+        author=ADA,
+        date="2024-08-01T10:00:00+00:00",
+    )
+    repo.commit(
+        "Grow w1",
+        {"web/w1.py": _lines("w1_", 24)},
+        author=LINUS,
+        date="2024-11-01T10:00:00+00:00",
+    )
+    repo.commit(
+        "Add api",
+        {f"web/api/a{i}.py": "a\nb\n" for i in range(1, 6)},
+        author=LINUS,
+        date="2024-11-02T10:00:00+00:00",
+    )
+    repo.commit(
+        "Docs", {"README.md": "# team\n\nHello.\n"}, author=ADA, date="2024-12-01T10:00:00+00:00"
+    )
+    return repo

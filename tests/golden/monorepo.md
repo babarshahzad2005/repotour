@@ -44,3 +44,7 @@ Files changed most often in the 6 months before HEAD (2023-07-05 to 2024-01-01).
 | `packages/cli/package.json` | 1 | `1d3be84cf363` (1 commit on 2024-01-01) |
 | `packages/core/index.js` | 1 | `1d3be84cf363` (1 commit on 2024-01-01) |
 | `packages/core/package.json` | 1 | `1d3be84cf363` (1 commit on 2024-01-01) |
+
+## Ownership
+
+No directory has enough source or test files for an ownership entry.

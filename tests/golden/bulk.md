@@ -33,3 +33,7 @@ Files changed most often in the 6 months before HEAD (2023-07-08 to 2024-01-04).
 | `b.py` | 1 | `4cc697a704fe` (1 commit on 2024-01-01) |
 
 1 bulk commit (formatting passes, mass renames, and similar) is left out of the history-based sections, e.g. `c770ccbb43aa` (listed in .git-blame-ignore-revs).
+
+## Ownership
+
+No directory has enough source or test files for an ownership entry.

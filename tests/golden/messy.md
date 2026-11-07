@@ -63,6 +63,10 @@ Files changed most often in the 6 months before HEAD (2023-07-05 to 2024-01-01).
 | `src/app.test.ts` | 1 | `32ef8fecf909` (1 commit on 2024-01-01) |
 | `src/huge.js` | 1 | `32ef8fecf909` (1 commit on 2024-01-01) |
 
+## Ownership
+
+No directory has enough source or test files for an ownership entry.
+
 ## Warnings
 
 - Skipped binary file: data/blob.dat

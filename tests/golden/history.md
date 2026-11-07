@@ -40,3 +40,7 @@ Files changed most often in the 6 months before HEAD (2024-07-01 to 2024-12-28).
 | `app/util.py` | 3 | `cd2cbdcf5915..1d1d8dc92c52` (3 commits between 2024-11-01 and 2024-11-03) |
 | `app/feature.py` | 1 | `de1075e9ba06` (1 commit on 2024-12-20) |
 | `logo.png` | 1 | `39e6b19ce330` (1 commit on 2024-11-20) |
+
+## Ownership
+
+No directory has enough source or test files for an ownership entry.

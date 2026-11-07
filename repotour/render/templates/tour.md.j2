@@ -108,6 +108,24 @@ No tracked file changed in the {{ hs.window }} before HEAD ({{ hs.start }} to {{
 {% else %}
 _Unavailable: see Warnings._
 {% endif %}
+
+## Ownership
+
+{% if tour.ownership %}
+{% if tour.ownership.entries %}
+Who has changed each area most, by share of changed lines across history (bulk commits and bots left out). Contacts committed to the area in the {{ tour.ownership.contact_window }} before HEAD.
+
+| Directory | Top authors | Contacts |
+|---|---|---|
+{% for e in tour.ownership.entries %}
+| `{{ e.path }}/` | {% for a in e.authors %}{{ a.name }} {{ a.share }}% (`{{ a.evidence[0].ref }}`){{ ", " if not loop.last }}{% endfor %} | {% if e.contacts %}{% for c in e.contacts %}{{ c.name }}{{ ", " if not loop.last }}{% endfor %}{% else %}none recently{% endif %} |
+{% endfor %}
+{% else %}
+No directory has enough source or test files for an ownership entry.
+{% endif %}
+{% else %}
+_Unavailable: see Warnings._
+{% endif %}
 {% if tour.warnings %}
 
 ## Warnings
