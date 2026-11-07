@@ -23,7 +23,7 @@ BULK_EXAMPLES = 3
 
 class HistoryAnalyzer:
     name = "history"
-    version = 3
+    version = 4
     depends_on: tuple[str, ...] = ()
 
     def run(self, snapshot: RepoSnapshot, inputs: dict[str, AnalyzerResult]) -> AnalyzerResult:
@@ -55,7 +55,18 @@ class HistoryAnalyzer:
             ),
             bulk=_bulk_claim(history, bulk),
         )
-        return AnalyzerResult(analyzer=self.name, data=to_data(section))
+        data = to_data(section)
+        # Every touched file, for the reading order (the section shows the top few).
+        data["touches"] = {
+            path: {
+                "commits": len(commits),
+                "ref": h.evidence[0].ref,
+                "detail": h.evidence[0].detail,
+            }
+            for path, commits in ranked
+            for h in (_hotspot(path, commits),)
+        }
+        return AnalyzerResult(analyzer=self.name, data=data)
 
 
 def _bulk_claim(history: tuple[CommitRecord, ...], bulk: dict[str, str]) -> BulkCommits | None:
