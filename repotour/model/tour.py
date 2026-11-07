@@ -210,6 +210,30 @@ class OwnershipSection:
     entries: tuple[OwnershipEntry, ...] = ()
 
 
+@dataclass(frozen=True, kw_only=True)
+class ImportEdge(Claim):
+    """One module importing another, inside the repository."""
+
+    source: str
+    target: str
+
+
+@dataclass(frozen=True, kw_only=True)
+class ExternalImports(Claim):
+    """Modules imported from outside the repository: counted, not drawn."""
+
+    count: int
+    examples: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class DependencyGraphSection:
+    languages: tuple[str, ...] = ()  # languages that were parsed; empty: none supported
+    nodes: tuple[str, ...] = ()  # repo paths, sorted
+    edges: tuple[ImportEdge, ...] = ()  # sorted by (source, target)
+    external: ExternalImports | None = None
+
+
 @dataclass(frozen=True)
 class Tour:
     meta: Meta
@@ -218,7 +242,7 @@ class Tour:
     reading_order: tuple[Claim, ...] = ()
     hotspots: HotspotsSection | None = None
     ownership: OwnershipSection | None = None
-    dependency_graph: tuple[Claim, ...] = ()
+    dependency_graph: DependencyGraphSection | None = None
     summaries: tuple[Claim, ...] = ()
     unavailable: tuple[str, ...] = ()  # sections whose analyzer failed
     warnings: tuple[str, ...] = ()

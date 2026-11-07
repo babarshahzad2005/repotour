@@ -5,6 +5,7 @@ from __future__ import annotations
 from jinja2 import Environment, PackageLoader, StrictUndefined
 
 from repotour.model.tour import Tour
+from repotour.render.mermaid import render_mermaid
 
 _ENV = Environment(
     loader=PackageLoader("repotour.render", "templates"),
@@ -15,6 +16,7 @@ _ENV = Environment(
     lstrip_blocks=True,
     newline_sequence="\n",
 )
+_ENV.globals["mermaid"] = render_mermaid
 
 
 def render_markdown(tour: Tour) -> str:
