@@ -7,6 +7,7 @@ from collections import defaultdict
 from repotour.analyzers import project
 from repotour.analyzers.base import AnalyzerResult
 from repotour.analyzers.commands import find_commands
+from repotour.analyzers.directories import describe_directories
 from repotour.model.serde import to_data
 from repotour.model.snapshot import FileInfo, RepoSnapshot
 from repotour.model.tour import (
@@ -25,19 +26,22 @@ EXAMPLES_PER_EXCLUDED_CATEGORY = 3
 
 class OverviewAnalyzer:
     name = "overview"
-    version = 4
+    version = 5
     depends_on: tuple[str, ...] = ()
 
     def run(self, snapshot: RepoSnapshot, inputs: dict[str, AnalyzerResult]) -> AnalyzerResult:
         counted = tuple(f for f in snapshot.files if not f.is_excluded)
         detection = project.detect(snapshot)
         commands, command_warnings = find_commands(snapshot)
+        directories = describe_directories(snapshot)
         overview = Overview(
             size=_size(snapshot, counted),
             languages=_languages(counted),
             project_types=detection.types,
             packages=detection.packages,
             commands=commands,
+            directories=directories.purposes,
+            notes=directories.notes,
             excluded=_excluded(snapshot.files),
             submodules=tuple(
                 Submodule(
@@ -50,7 +54,12 @@ class OverviewAnalyzer:
         return AnalyzerResult(
             analyzer=self.name,
             data=to_data(overview),
-            warnings=[*snapshot.warnings, *detection.warnings, *command_warnings],
+            warnings=[
+                *snapshot.warnings,
+                *detection.warnings,
+                *command_warnings,
+                *directories.warnings,
+            ],
         )
 
 
