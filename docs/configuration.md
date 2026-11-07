@@ -21,6 +21,7 @@ notes: {}                     # path -> hand-written note shown next to that pat
 test_patterns: []             # extra globs that mark files as tests
 bots: []                      # author names to exclude, besides names ending in [bot]
 ignore_revs: []               # commits to treat as bulk, besides .git-blame-ignore-revs
+full_graph: false             # draw every module instead of collapsing (--full-graph)
 
 thresholds:
   bulk_commit_files: 200      # commits touching more files are bulk commits

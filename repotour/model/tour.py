@@ -212,10 +212,11 @@ class OwnershipSection:
 
 @dataclass(frozen=True, kw_only=True)
 class ImportEdge(Claim):
-    """One module importing another, inside the repository."""
+    """One node importing another. When collapsed, the module imports behind it."""
 
     source: str
     target: str
+    count: int = 1  # module-level imports this edge stands for
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -227,11 +228,40 @@ class ExternalImports(Claim):
 
 
 @dataclass(frozen=True)
+class GraphNode:
+    id: str  # a module path, or a directory (or "(root)") when collapsed
+    modules: int = 1
+
+
+@dataclass(frozen=True, kw_only=True)
+class CoreModule(Claim):
+    """One of the most depended-on modules, by PageRank."""
+
+    path: str
+    importers: int
+    rank: int  # 1-based position by PageRank
+
+
+@dataclass(frozen=True, kw_only=True)
+class LeafModule(Claim):
+    """A module nothing imports that is not an entry point: a safe first change."""
+
+    path: str
+
+
+@dataclass(frozen=True)
 class DependencyGraphSection:
     languages: tuple[str, ...] = ()  # languages that were parsed; empty: none supported
-    nodes: tuple[str, ...] = ()  # repo paths, sorted
-    edges: tuple[ImportEdge, ...] = ()  # sorted by (source, target)
+    modules: int = 0  # module-level node count
+    imports: int = 0  # module-level edge count
+    depth: int = 0  # 0: drawn per module; otherwise collapsed to this directory depth
+    nodes: tuple[GraphNode, ...] = ()  # as drawn, sorted
+    edges: tuple[ImportEdge, ...] = ()  # as drawn, sorted by (source, target)
+    omitted: int = 0  # directories left out when even the top level was too big
     external: ExternalImports | None = None
+    core: tuple[CoreModule, ...] = ()
+    leaves: tuple[LeafModule, ...] = ()
+    leaves_omitted: int = 0
 
 
 @dataclass(frozen=True, kw_only=True)
