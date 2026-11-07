@@ -48,3 +48,7 @@ Files changed most often in the 6 months before HEAD (2023-07-05 to 2024-01-01).
 ## Ownership
 
 No directory has enough source or test files for an ownership entry.
+
+## Dependency graph
+
+Unavailable: no supported language in this repository.

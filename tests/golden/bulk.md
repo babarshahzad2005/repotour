@@ -37,3 +37,7 @@ Files changed most often in the 6 months before HEAD (2023-07-08 to 2024-01-04).
 ## Ownership
 
 No directory has enough source or test files for an ownership entry.
+
+## Dependency graph
+
+How modules import each other (Python; static imports only; tests, generated, and vendored files left out). 2 modules, 0 imports inside the repository.

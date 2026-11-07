@@ -18,6 +18,7 @@ from typing import Any
 
 from repotour import __version__
 from repotour.analyzers.base import Analyzer, AnalyzerResult
+from repotour.analyzers.dependencies import DependenciesAnalyzer
 from repotour.analyzers.history import HistoryAnalyzer
 from repotour.analyzers.overview import OverviewAnalyzer
 from repotour.analyzers.ownership import OwnershipAnalyzer
@@ -27,7 +28,14 @@ from repotour.config import CliOverrides, Config, load_config
 from repotour.git import reader
 from repotour.model.serde import from_data
 from repotour.model.snapshot import RepoSnapshot
-from repotour.model.tour import HotspotsSection, Meta, Overview, OwnershipSection, Tour
+from repotour.model.tour import (
+    DependencyGraphSection,
+    HotspotsSection,
+    Meta,
+    Overview,
+    OwnershipSection,
+    Tour,
+)
 from repotour.scan.scanner import scan
 
 SHALLOW_WARNING = (
@@ -40,11 +48,12 @@ SECTIONS: dict[str, tuple[str, type]] = {
     "overview": ("overview", Overview),
     "history": ("hotspots", HotspotsSection),
     "ownership": ("ownership", OwnershipSection),
+    "dependencies": ("dependency_graph", DependencyGraphSection),
 }
 
 
 def default_analyzers() -> list[Analyzer]:
-    return [OverviewAnalyzer(), HistoryAnalyzer(), OwnershipAnalyzer()]
+    return [OverviewAnalyzer(), HistoryAnalyzer(), OwnershipAnalyzer(), DependenciesAnalyzer()]
 
 
 @dataclass(frozen=True)

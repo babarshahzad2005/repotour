@@ -60,6 +60,10 @@ Files changed most often in the 6 months before HEAD (2023-07-05 to 2024-01-01).
 
 No directory has enough source or test files for an ownership entry.
 
+## Dependency graph
+
+How modules import each other (Python; static imports only; tests, generated, and vendored files left out). 3 modules, 0 imports inside the repository.
+
 ## Warnings
 
 - .repotour.yml: note for 'gone/' points to a path that does not exist

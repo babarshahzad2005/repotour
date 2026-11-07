@@ -57,3 +57,7 @@ Who has changed each area most, by share of changed lines across history (bulk c
 
 **Bus-factor warnings** (one person holds most of a big, busy area):
 - `core/`: Ada Lovelace made 100% of the changes (`e3213ebf2a05..ceaeecc364c4`; 11 commits, 33 lines changed; directory has 5 files and 11 commits)
+
+## Dependency graph
+
+How modules import each other (Python; static imports only; tests, generated, and vendored files left out). 15 modules, 0 imports inside the repository.

@@ -58,3 +58,7 @@ Who has changed each area most, by share of changed lines across history (bulk c
 | `deep/a/` | Grace Hopper 100% (`310da4c98f92`) | Grace Hopper | active (last change on 2024-07-01) |
 | `web/` | Linus Ops 60% (`02b01fb74860..9007c71394a0`), Grace Hopper 40% (`7bd633d37800`) | Linus Ops, Grace Hopper | active (last change on 2024-11-02) |
 | `web/api/` | Linus Ops 100% (`9007c71394a0`) | Linus Ops | active (last change on 2024-11-02) |
+
+## Dependency graph
+
+How modules import each other (Python; static imports only; tests, generated, and vendored files left out). 23 modules, 0 imports inside the repository.

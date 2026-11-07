@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Dependency graph section (Python): static imports parsed with tree-sitter and resolved to repository files (relative imports, top-level packages, `src/` layout), rendered as a Mermaid diagram that displays on GitHub. Every edge cites its import; external modules are counted; test, generated, and vendored files are left out; unparseable files become warnings.
+
 ## [0.2.0] - 2026-11-07
 
 Second milestone (M2): history and ownership.

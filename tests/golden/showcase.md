@@ -64,3 +64,16 @@ Files changed most often in the 6 months before HEAD (2023-07-05 to 2024-01-01).
 ## Ownership
 
 No directory has enough source or test files for an ownership entry.
+
+## Dependency graph
+
+How modules import each other (Python; static imports only; tests, generated, and vendored files left out). 4 modules, 1 import inside the repository.
+
+```mermaid
+flowchart LR
+    n0["plugins/extra.py"]
+    n1["src/showcase/__init__.py"]
+    n2["src/showcase/cli.py"]
+    n3["src/showcase/core.py"]
+    n2 --> n3
+```
