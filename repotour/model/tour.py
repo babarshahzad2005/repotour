@@ -142,6 +142,13 @@ class Hotspot(Claim):
     commits: int
 
 
+@dataclass(frozen=True, kw_only=True)
+class BulkCommits(Claim):
+    """Bulk commits left out of hotspots and ownership, across all history."""
+
+    count: int
+
+
 @dataclass(frozen=True)
 class HotspotsSection:
     since: str  # the window as configured, e.g. "6m"
@@ -149,6 +156,7 @@ class HotspotsSection:
     start: str  # first day of the window, ISO date (UTC)
     end: str  # HEAD's commit date, ISO date (UTC)
     files: tuple[Hotspot, ...] = ()
+    bulk: BulkCommits | None = None
 
 
 @dataclass(frozen=True)

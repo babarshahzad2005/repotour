@@ -10,18 +10,20 @@ from collections import defaultdict
 from datetime import UTC, datetime
 
 from repotour.analyzers.base import AnalyzerResult
+from repotour.analyzers.bulk import find_bulk
 from repotour.config import describe_duration, duration_days
 from repotour.model.history import CommitRecord, follow_renames
 from repotour.model.serde import to_data
 from repotour.model.snapshot import RepoSnapshot
-from repotour.model.tour import Evidence, Hotspot, HotspotsSection
+from repotour.model.tour import BulkCommits, Evidence, Hotspot, HotspotsSection
 
 SECONDS_PER_DAY = 86_400
+BULK_EXAMPLES = 3
 
 
 class HistoryAnalyzer:
     name = "history"
-    version = 2
+    version = 3
     depends_on: tuple[str, ...] = ()
 
     def run(self, snapshot: RepoSnapshot, inputs: dict[str, AnalyzerResult]) -> AnalyzerResult:
@@ -29,10 +31,14 @@ class HistoryAnalyzer:
         end = snapshot.head_timestamp
         start = end - duration_days(since) * SECONDS_PER_DAY
         counted = {f.path for f in snapshot.files if not f.is_excluded}
+        # Renames are followed through bulk commits too (a mass move is bulk),
+        # so filter bulk commits only after paths are resolved.
+        history = follow_renames(snapshot.history())
+        bulk = find_bulk(snapshot, history)
 
         touches: dict[str, list[CommitRecord]] = defaultdict(list)
-        for commit in follow_renames(snapshot.history()):
-            if commit.timestamp < start:
+        for commit in history:
+            if commit.timestamp < start or commit.sha in bulk:
                 continue
             for change in commit.files:
                 if change.path in counted:
@@ -47,8 +53,21 @@ class HistoryAnalyzer:
             files=tuple(
                 _hotspot(path, commits) for path, commits in ranked[: snapshot.config.caps.hotspots]
             ),
+            bulk=_bulk_claim(history, bulk),
         )
         return AnalyzerResult(analyzer=self.name, data=to_data(section))
+
+
+def _bulk_claim(history: tuple[CommitRecord, ...], bulk: dict[str, str]) -> BulkCommits | None:
+    if not bulk:
+        return None
+    examples = [c for c in history if c.sha in bulk][:BULK_EXAMPLES]
+    return BulkCommits(
+        count=len(bulk),
+        evidence=tuple(
+            Evidence(kind="commit_range", ref=c.sha[:12], detail=bulk[c.sha]) for c in examples
+        ),
+    )
 
 
 def _hotspot(path: str, commits: list[CommitRecord]) -> Hotspot:
