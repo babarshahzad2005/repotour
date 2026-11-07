@@ -23,6 +23,7 @@ from repotour.analyzers.entry_points import EntryPointsAnalyzer
 from repotour.analyzers.history import HistoryAnalyzer
 from repotour.analyzers.overview import OverviewAnalyzer
 from repotour.analyzers.ownership import OwnershipAnalyzer
+from repotour.analyzers.reading_order import ReadingOrderAnalyzer
 from repotour.cache.history import load_history
 from repotour.cache.parse import ParseCache
 from repotour.cache.store import CacheStore, ResultKey, cache_path
@@ -37,6 +38,7 @@ from repotour.model.tour import (
     Meta,
     Overview,
     OwnershipSection,
+    ReadingOrderSection,
     Tour,
 )
 from repotour.scan.scanner import scan
@@ -53,6 +55,7 @@ SECTIONS: dict[str, tuple[str, type]] = {
     "ownership": ("ownership", OwnershipSection),
     "dependencies": ("dependency_graph", DependencyGraphSection),
     "entry_points": ("entry_points", EntryPointsSection),
+    "reading_order": ("reading_order", ReadingOrderSection),
 }
 
 
@@ -63,6 +66,7 @@ def default_analyzers() -> list[Analyzer]:
         HistoryAnalyzer(),
         OwnershipAnalyzer(),
         DependenciesAnalyzer(),
+        ReadingOrderAnalyzer(),
     ]
 
 

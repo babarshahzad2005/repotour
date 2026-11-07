@@ -39,7 +39,7 @@ GRAPH_CATEGORIES = ("source",)
 
 class DependenciesAnalyzer:
     name = "dependencies"
-    version = 3
+    version = 4
     depends_on: tuple[str, ...] = ("entry_points",)
 
     def run(self, snapshot: RepoSnapshot, inputs: dict[str, AnalyzerResult]) -> AnalyzerResult:
@@ -96,7 +96,11 @@ class DependenciesAnalyzer:
             leaves=tuple(leaves[:MAX_LEAVES]),
             leaves_omitted=max(0, len(leaves) - MAX_LEAVES),
         )
-        return AnalyzerResult(analyzer=self.name, data=to_data(section), warnings=warnings)
+        data = to_data(section)
+        # Module-level graph for the reading order (the drawn graph may be collapsed).
+        data["module_edges"] = [[s, t, lines[(s, t)]] for s, t in edges]
+        data["ranks"] = ranks
+        return AnalyzerResult(analyzer=self.name, data=data, warnings=warnings)
 
 
 def _reader(snapshot: RepoSnapshot) -> Callable[[str], str]:

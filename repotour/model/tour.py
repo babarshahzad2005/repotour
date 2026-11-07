@@ -280,12 +280,25 @@ class EntryPointsSection:
     omitted: int = 0  # entries beyond the per-kind cap
 
 
+@dataclass(frozen=True, kw_only=True)
+class ReadingStep(Claim):
+    """One file in the reading order, with the reason it was chosen."""
+
+    path: str
+    reason: str
+
+
+@dataclass(frozen=True)
+class ReadingOrderSection:
+    steps: tuple[ReadingStep, ...] = ()
+
+
 @dataclass(frozen=True)
 class Tour:
     meta: Meta
     overview: Overview | None = None
     entry_points: EntryPointsSection | None = None
-    reading_order: tuple[Claim, ...] = ()
+    reading_order: ReadingOrderSection | None = None
     hotspots: HotspotsSection | None = None
     ownership: OwnershipSection | None = None
     dependency_graph: DependencyGraphSection | None = None

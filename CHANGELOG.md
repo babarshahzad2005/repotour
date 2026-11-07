@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Start here: up to five files to read first, in order. Pinned entry points come first, then execution entry points, then public surfaces; within each group files rank by PageRank and hotspot percentiles. After the first entry point, each next file is the best one imported by a file already chosen. Every reason comes from real signals (entry point, imported by, importer count, repeated changes), and the list is never padded.
 - Go in the dependency graph and entry points: imports resolve through every `go.mod` module path (covering `go.work` workspaces), linking to one representative file of the imported package (ADR-0005); files of an imported package are never called leaf modules. Entry points: `package main` programs, `ListenAndServe` servers, and each module's root package.
 - JavaScript and TypeScript in the dependency graph and entry points: static `import`/`export ... from`/`require('literal')` (and TypeScript `import x = require()`), resolved through relative paths with extension inference and index files, `tsconfig.json` `paths`/`baseUrl`, and workspace packages; entry points from `package.json` `main`/`module`/`exports`/`bin`, server startup (`.listen()`), and `require.main === module`.
 - Core and leaf modules: Repotour's own deterministic PageRank names the most depended-on modules; modules nothing imports (that are not entry points or empty) are listed as safe places for a first change.
