@@ -154,6 +154,9 @@ class PythonAdapter:
             submodules.append(module)
         return tuple(sorted(set(submodules)))
 
+    def imported_together(self, target: str, index: object) -> tuple[str, ...]:
+        return (target,)
+
     def external_name(self, raw: RawImport) -> str:
         return raw.module.lstrip(".").split(".", 1)[0]
 

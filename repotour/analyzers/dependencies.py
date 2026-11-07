@@ -39,7 +39,7 @@ GRAPH_CATEGORIES = ("source",)
 
 class DependenciesAnalyzer:
     name = "dependencies"
-    version = 2
+    version = 3
     depends_on: tuple[str, ...] = ("entry_points",)
 
     def run(self, snapshot: RepoSnapshot, inputs: dict[str, AnalyzerResult]) -> AnalyzerResult:
@@ -50,6 +50,7 @@ class DependenciesAnalyzer:
         nodes: list[str] = []
         lines: dict[tuple[str, str], int] = {}  # (source, target) -> first import line
         external: dict[str, tuple[str, RawImport]] = {}  # name -> first (path, import)
+        reached: set[str] = set()  # files reached by some import (whole Go packages)
 
         for adapter in ADAPTERS:
             paths = sorted(p for p in candidates if adapter.handles(p))
@@ -67,6 +68,7 @@ class DependenciesAnalyzer:
                     for target in targets:
                         if target != path:
                             lines.setdefault((path, target), raw.line)
+                            reached.update(adapter.imported_together(target, index))
 
         nodes.sort()
         edges = sorted(lines)
@@ -76,7 +78,7 @@ class DependenciesAnalyzer:
         limit = len(nodes) if config.full_graph else config.thresholds.graph_max_nodes
         drawn = collapse(nodes, edges, ranks, max(limit, 1))
         empty = {f.path for f in snapshot.files if f.lines == 0}
-        leaves = _leaves([n for n in nodes if n not in empty], edges, entry_paths)
+        leaves = _leaves([n for n in nodes if n not in empty | reached], edges, entry_paths)
 
         section = DependencyGraphSection(
             languages=tuple(sorted(languages)),

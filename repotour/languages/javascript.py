@@ -161,6 +161,9 @@ class JavaScriptAdapter:
                     return (found,)
         return ()
 
+    def imported_together(self, target: str, index: object) -> tuple[str, ...]:
+        return (target,)
+
     def external_name(self, raw: RawImport) -> str:
         parts = raw.module.split("/")
         return "/".join(parts[:2]) if raw.module.startswith("@") else parts[0]
