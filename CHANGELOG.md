@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Generated-file headers only count inside a comment at the start of a line, so prose that mentions the marker is no longer misclassified.
+
 ### Added
 
 - `repotour` command that writes `TOUR.md` with the tour's metadata (repository name, HEAD commit, tool version), as deterministic UTF-8 with LF line endings on every platform.
@@ -23,4 +27,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - File classification: generated and vendored files (from `.gitattributes`, well-known paths, lockfiles, generated-file headers, and config `exclude`) are left out of languages and size and listed with their reasons. Tests are recognized by directory, file name, and config `test_patterns`.
 - Binary files and files over 1 MB are skipped; unexpected ones are reported as warnings. Git LFS pointers count as other files; submodules are listed but never entered.
 - Analysis cache in the git common directory (shared by worktrees, never tracked, safe to delete): re-running on the same commit and config renders without re-scanning. `--no-cache` neither reads nor writes it.
+- Project types (web app, library, CLI, monorepo) detected from manifests and build files, each with evidence, or "unknown". Monorepo packages from npm/pnpm workspaces, `go.work`, Cargo workspaces, or manifests in several top-level directories.
 - Contributor documentation, code of conduct, security policy, and issue and pull request templates.

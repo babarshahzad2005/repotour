@@ -67,7 +67,12 @@ ASSET_EXTENSIONS = frozenset(
         ".mp3", ".mp4", ".wav", ".ogg", ".webm", ".mov",
     }
 )  # fmt: skip
-_GENERATED_HEADER = re.compile(rb"Code generated .*DO NOT EDIT|@generated")
+# The marker must sit in a comment at the start of a line, as tools write it.
+# Prose that merely mentions the phrase (a docstring, a README) does not count.
+_COMMENT_START = rb"^[ \t]*(?://|#|/\*+|\*|--|;|<!--)[ \t]*"
+_GENERATED_HEADER = re.compile(
+    _COMMENT_START + rb"(?:Code generated .*DO NOT EDIT|.*@generated\b)", re.MULTILINE
+)
 
 # Values `git check-attr` reports for an attribute.
 ATTR_SET = ("set", "true")
@@ -136,7 +141,7 @@ def _generated_reason(path: str, data: bytes) -> str | None:
             return f"generated file name {pattern}"
     header = _GENERATED_HEADER.search(data[:HEADER_SNIFF_BYTES])
     if header is not None:
-        marker = "DO NOT EDIT" if header.group().startswith(b"Code") else "@generated"
+        marker = "DO NOT EDIT" if b"DO NOT EDIT" in header.group() else "@generated"
         return f"generated-file header ({marker})"
     return None
 

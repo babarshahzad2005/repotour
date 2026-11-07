@@ -74,10 +74,27 @@ class Submodule(Claim):
     path: str
 
 
+@dataclass(frozen=True, kw_only=True)
+class ProjectType(Claim):
+    """One kind the repository is: "web app", "library", "CLI", or "monorepo"."""
+
+    kind: str
+
+
+@dataclass(frozen=True, kw_only=True)
+class Package(Claim):
+    """A package inside a monorepo."""
+
+    path: str
+    name: str | None
+
+
 @dataclass(frozen=True)
 class Overview:
     size: Size
     languages: tuple[LanguageStat, ...] = ()
+    project_types: tuple[ProjectType, ...] = ()  # empty means "unknown"
+    packages: tuple[Package, ...] = ()
     excluded: tuple[ExcludedFiles, ...] = ()
     submodules: tuple[Submodule, ...] = ()
 

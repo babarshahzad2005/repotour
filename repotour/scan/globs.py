@@ -18,6 +18,12 @@ def matches(pattern: str, path: str) -> bool:
     return _compile(pattern).match(path) is not None
 
 
+def matches_exactly(pattern: str, path: str) -> bool:
+    """Whole-path match, anchored at the root, nothing below (workspace globs)."""
+    regex = _translate(pattern.strip("/").removeprefix("./"))
+    return re.fullmatch(regex, path) is not None
+
+
 @lru_cache(maxsize=512)
 def _compile(pattern: str) -> re.Pattern[str]:
     directory = pattern.endswith("/")
