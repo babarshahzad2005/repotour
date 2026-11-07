@@ -59,7 +59,7 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "PT", "C4", "PTH"]
 [tool.mypy]
 python_version = "3.11"
 strict = true
-files = ["repotour", "tests"]
+files = ["repotour", "tests", "benchmarks"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
