@@ -83,5 +83,4 @@ How modules import each other (Go, JavaScript/TypeScript, Python; static imports
 
 ## Warnings
 
-- Skipped binary file: data/blob.dat
 - Skipped file larger than 1 MB: src/huge.js

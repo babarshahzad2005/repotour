@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Files with syntax the parser does not fully know (for example newer TypeScript) keep the imports and entry points it recovered, with one summary warning instead of being dropped from the graph one warning at a time.
+- Binary and oversized files only produce a warning when they are code in a known language; translation files, archives, wheels, and data files are counted silently (Django went from 1,315 warnings to a handful).
 - Example, documentation, and benchmark code no longer leads the reading order or entry points, and is never a core or leaf module.
 - A `package.json` without `main` or `exports` is treated as Node does (`index.js`), so such packages are libraries with a public surface.
 - `require('../..')` resolves to the directory's index file; unresolved relative imports are no longer counted as external packages.
