@@ -8,7 +8,8 @@ Rules, first match wins:
 3. Well-known vendored paths (`node_modules/`, `vendor/`, `third_party/`, ...).
 4. Well-known generated paths and names (`dist/`, `*.min.js`, lockfiles, ...).
 5. Generated-file headers (`Code generated ... DO NOT EDIT`, `@generated`).
-6. Git LFS pointers and binary content are `other`.
+6. Git LFS pointers and binary content are `other`. Binary or oversized files
+   warn only when they are code in a known language; others are counted.
 7. Test directories, test file names, and config `test_patterns`.
 8. Otherwise by extension: source, docs, config, or other.
 """
@@ -59,14 +60,6 @@ TEST_NAMES = (
     "*_test.go",
     *(f"*.{kind}.{ext}" for kind in ("test", "spec") for ext in ("js", "ts", "jsx", "tsx")),
 )
-ASSET_EXTENSIONS = frozenset(
-    {
-        ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".ico", ".webp", ".avif", ".tiff",
-        ".pdf", ".woff", ".woff2", ".ttf", ".otf", ".eot",
-        ".zip", ".gz", ".tgz", ".bz2", ".xz", ".7z", ".jar",
-        ".mp3", ".mp4", ".wav", ".ogg", ".webm", ".mov",
-    }
-)  # fmt: skip
 # The marker must sit in a comment at the start of a line, as tools write it.
 # Prose that merely mentions the phrase (a docstring, a README) does not count.
 _COMMENT_START = rb"^[ \t]*(?://|#|/\*+|\*|--|;|<!--)[ \t]*"
@@ -113,9 +106,11 @@ def classify(path: str, data: bytes, attrs: dict[str, str], config: Config) -> C
 
     if data.startswith(LFS_POINTER_PREFIX):
         return Classification("other", None, "Git LFS pointer")
+    # Binary and oversized files are only worth a warning when they are code
+    # Repotour would have analyzed; translations, archives, wheels, and data
+    # blobs are expected and only counted.
     if b"\0" in data[:BINARY_SNIFF_BYTES]:
-        expected = PurePosixPath(path).suffix.lower() in ASSET_EXTENSIONS
-        warning = None if expected else f"Skipped binary file: {path}"
+        warning = f"Skipped binary file: {path}" if language is not None else None
         return Classification("other", None, "binary", warning)
 
     category: Category = category_of(path, language)
@@ -123,9 +118,8 @@ def classify(path: str, data: bytes, attrs: dict[str, str], config: Config) -> C
     if reason is not None:
         category = "test"
     if len(data) > MAX_ANALYZED_BYTES:
-        return Classification(
-            category, None, "larger than 1 MB", f"Skipped file larger than 1 MB: {path}"
-        )
+        warning = f"Skipped file larger than 1 MB: {path}" if language is not None else None
+        return Classification(category, None, "larger than 1 MB", warning)
     return Classification(category, language, reason)
 
 
