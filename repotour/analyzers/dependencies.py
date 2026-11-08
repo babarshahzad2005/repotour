@@ -31,6 +31,7 @@ from repotour.model.tour import (
     ImportEdge,
     LeafModule,
 )
+from repotour.scan.filetypes import is_peripheral
 
 EXTERNAL_EXAMPLES = 5
 MAX_LEAVES = 10
@@ -39,7 +40,7 @@ GRAPH_CATEGORIES = ("source",)
 
 class DependenciesAnalyzer:
     name = "dependencies"
-    version = 4
+    version = 5
     depends_on: tuple[str, ...] = ("entry_points",)
 
     def run(self, snapshot: RepoSnapshot, inputs: dict[str, AnalyzerResult]) -> AnalyzerResult:
@@ -63,7 +64,7 @@ class DependenciesAnalyzer:
             for path, imports in parsed.items():
                 for raw in imports:
                     targets = adapter.resolve(raw, path, index)
-                    if not targets:
+                    if not targets and not raw.module.startswith((".", "/")):
                         external.setdefault(adapter.external_name(raw), (path, raw))
                     for target in targets:
                         if target != path:
@@ -152,7 +153,7 @@ def _core(
         importers[target].append(source)
     ordered = sorted(nodes, key=lambda n: (-ranks[n], n))
     position = {n: i + 1 for i, n in enumerate(ordered)}
-    imported = [n for n in ordered if importers[n]]
+    imported = [n for n in ordered if importers[n] and not is_peripheral(n)]
     count = min(len(imported), max(1, math.ceil(len(nodes) * share))) if imported else 0
     return tuple(
         CoreModule(
@@ -185,7 +186,7 @@ def _leaves(
             ),
         )
         for n in nodes
-        if in_degree[n] == 0 and n not in entry_paths
+        if in_degree[n] == 0 and n not in entry_paths and not is_peripheral(n)
     ]
 
 

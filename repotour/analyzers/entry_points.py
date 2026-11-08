@@ -3,7 +3,8 @@
 Sources: code patterns found by each language adapter, entries the adapter
 declares (public surfaces, console scripts), manifests in any language, and
 config `pinned_entry_points`. One entry per file and kind, with every source
-kept as evidence. Pinned entries come first, then by path; each kind is
+kept as evidence. Pinned entries come first, peripheral code (examples,
+docs, benchmarks) last, otherwise by path; each kind is
 capped by `caps.entry_points_per_kind`.
 """
 
@@ -19,6 +20,7 @@ from repotour.languages.base import DeclaredEntry
 from repotour.model.serde import to_data
 from repotour.model.snapshot import RepoSnapshot
 from repotour.model.tour import EntryPoint, EntryPointsSection, Evidence
+from repotour.scan.filetypes import is_peripheral
 
 KINDS = ("execution", "public surface")
 
@@ -37,7 +39,7 @@ class _Draft:
 
 class EntryPointsAnalyzer:
     name = "entry_points"
-    version = 1
+    version = 2
     depends_on: tuple[str, ...] = ()
 
     def run(self, snapshot: RepoSnapshot, inputs: dict[str, AnalyzerResult]) -> AnalyzerResult:
@@ -110,7 +112,7 @@ class EntryPointsAnalyzer:
         for kind in KINDS:
             keys = sorted(
                 (key for key in drafts if key[1] == kind),
-                key=lambda key: (not drafts[key].pinned, key[0]),
+                key=lambda key: (not drafts[key].pinned, is_peripheral(key[0]), key[0]),
             )
             omitted += max(0, len(keys) - cap)
             for path, _ in keys[:cap]:

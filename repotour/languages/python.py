@@ -65,7 +65,7 @@ class PythonIndex:
 
 class PythonAdapter:
     name = "Python"
-    version = 1
+    version = 2
 
     def handles(self, path: str) -> bool:
         return path.endswith((".py", ".pyi"))
@@ -109,7 +109,9 @@ class PythonAdapter:
             if _is_top_level_package(path, index)
         ]
         declared.extend(
-            _main_module_entry(path) for path in paths if PurePosixPath(path).name == "__main__.py"
+            _main_module_entry(path, index)
+            for path in paths
+            if PurePosixPath(path).name == "__main__.py"
         )
         for manifest in sorted(p for p in all_paths if PurePosixPath(p).name == "pyproject.toml"):
             declared.extend(_console_scripts(manifest, read(manifest), index))
@@ -284,9 +286,11 @@ def _console_scripts(manifest: str, text: str, index: PythonIndex) -> list[Decla
     return declared
 
 
-def _main_module_entry(path: str) -> DeclaredEntry:
+def _main_module_entry(path: str, index: PythonIndex) -> DeclaredEntry:
     package = PurePosixPath(path).parent
-    dotted = _module_name(f"{package}/__init__.py", "") or package.name
+    names = [n for n, p in index.modules.items() if p == f"{package}/__init__.py"]
+    # The shortest dotted name comes from the deepest source root (src/flask -> flask).
+    dotted = min(names, key=lambda n: (len(n), n)) if names else package.name
     return DeclaredEntry(
         path=path,
         kind="execution",

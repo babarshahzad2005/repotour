@@ -6,6 +6,8 @@ order), then execution entry points, then public surfaces, then everything
 else. Within a group, files rank by the mean
 of their PageRank percentile and hotspot percentile, ties by path.
 
+Peripheral code (examples, docs, benchmarks) always ranks below the rest.
+
 Selection starts with the highest-ranked entry point, then repeatedly takes
 the highest-ranked file imported by a file already chosen; when none is
 left, the highest-ranked remaining file that has a signal. A file needs a
@@ -25,6 +27,7 @@ from repotour.config import CONFIG_FILE
 from repotour.model.serde import from_data, to_data
 from repotour.model.snapshot import RepoSnapshot
 from repotour.model.tour import Evidence, ReadingOrderSection, ReadingStep
+from repotour.scan.filetypes import is_peripheral
 
 MIN_CHANGES_FOR_SIGNAL = 2
 OTHER = 3
@@ -41,6 +44,7 @@ class _Candidate:
     importers: list[str] = field(default_factory=list)
     commits: int = 0
     touch: dict[str, Any] | None = None
+    peripheral: bool = False
 
     @property
     def has_signal(self) -> bool:
@@ -49,7 +53,7 @@ class _Candidate:
 
 class ReadingOrderAnalyzer:
     name = "reading_order"
-    version = 2
+    version = 3
     depends_on: tuple[str, ...] = ("entry_points", "dependencies", "history")
 
     def run(self, snapshot: RepoSnapshot, inputs: dict[str, AnalyzerResult]) -> AnalyzerResult:
@@ -112,6 +116,7 @@ def _candidates(
             importers=importers.get(path, []),
             commits=int(touches.get(path, {}).get("commits", 0)),
             touch=touches.get(path),
+            peripheral=is_peripheral(path),
         )
     return candidates
 
@@ -138,9 +143,10 @@ def _select(
     taken = {p for p, _ in chosen}
 
     def best(pool: list[_Candidate], by_group: bool) -> _Candidate | None:
-        key = (
-            (lambda c: (c.group, -c.score, c.path)) if by_group else (lambda c: (-c.score, c.path))
-        )
+        # Peripheral code (examples, docs, benchmarks) comes after everything else.
+        def key(c: _Candidate) -> tuple[bool, int, float, str]:
+            return (c.peripheral, c.group if by_group else 0, -c.score, c.path)
+
         return min(pool, key=key, default=None)
 
     if not chosen:

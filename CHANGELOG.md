@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Sample tours of Flask, Express, and fzf at pinned release commits in `docs/samples/`, reviewed against a written reading-order rubric (`docs/rubric.md`): 4/5, 4/5, and 5/5.
 - Start here: up to five files to read first, in order. Pinned entry points come first, then execution entry points, then public surfaces; within each group files rank by PageRank and hotspot percentiles. After the first entry point, each next file is the best one imported by a file already chosen. Every reason comes from real signals (entry point, imported by, importer count, repeated changes), and the list is never padded.
 - Go in the dependency graph and entry points: imports resolve through every `go.mod` module path (covering `go.work` workspaces), linking to one representative file of the imported package (ADR-0005); files of an imported package are never called leaf modules. Entry points: `package main` programs, `ListenAndServe` servers, and each module's root package.
 - JavaScript and TypeScript in the dependency graph and entry points: static `import`/`export ... from`/`require('literal')` (and TypeScript `import x = require()`), resolved through relative paths with extension inference and index files, `tsconfig.json` `paths`/`baseUrl`, and workspace packages; entry points from `package.json` `main`/`module`/`exports`/`bin`, server startup (`.listen()`), and `require.main === module`.
@@ -16,6 +17,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Per-file parse cache: parse results are cached by content hash and language adapter version, so a re-run parses only changed files (a moved but unchanged file is never re-parsed). Within one run, each file is parsed once and shared by all analyzers.
 - Entry points section: where execution starts (scripts, CLIs, servers, web apps, `python -m` modules, console scripts) and the public surface (top-level packages), plus commands from `package.json`, `Dockerfile`, and `Cargo.toml` that point at real files, in any language. Pinned entry points from config come first; each kind is capped at 10.
 - Dependency graph section (Python): static imports parsed with tree-sitter and resolved to repository files (relative imports, top-level packages, `src/` layout), rendered as a Mermaid diagram that displays on GitHub. Every edge cites its import; external modules are counted; test, generated, and vendored files are left out; unparseable files become warnings.
+
+### Fixed
+
+- Example, documentation, and benchmark code no longer leads the reading order or entry points, and is never a core or leaf module.
+- A `package.json` without `main` or `exports` is treated as Node does (`index.js`), so such packages are libraries with a public surface.
+- `require('../..')` resolves to the directory's index file; unresolved relative imports are no longer counted as external packages.
+- `python -m` names use the package's source root.
+- GitHub Actions expressions are no longer quoted as commands; continued Makefile recipe lines end with an ellipsis; Go library evidence names each package once.
 
 ## [0.2.0] - 2026-11-07
 

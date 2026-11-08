@@ -182,8 +182,12 @@ class _Detector:
         if not isinstance(data, dict):
             return
         library_keys = [k for k in ("main", "exports", "module") if k in data]
+        default_index = f"{_parent(path)}/index.js" if _parent(path) else "index.js"
         if library_keys:
             self._add("library", path, f'"{library_keys[0]}"')
+        elif not data.get("private") and default_index in self.paths:
+            self._add("library", path, "index.js (Node's default main)")
+            library_keys = ["main"]
         if "bin" in data:
             self._add("CLI", path, '"bin"')
         deps = data.get("dependencies")
@@ -251,6 +255,7 @@ class _Detector:
 
     def _go(self, directory: str, go_module_dirs: list[str]) -> None:
         nested = [d for d in go_module_dirs if d != directory and _is_within(d, directory)]
+        seen: set[str] = set()
         for path in sorted(self.paths):
             if not path.endswith(".go") or path.endswith("_test.go"):
                 continue
@@ -269,7 +274,9 @@ class _Detector:
                     self._add("CLI", path, "package main")
             else:
                 relative = PurePosixPath(path).relative_to(directory) if directory else path
-                if not str(relative).startswith(("internal/", "cmd/")):
+                package_dir = _parent(path)
+                if not str(relative).startswith(("internal/", "cmd/")) and package_dir not in seen:
+                    seen.add(package_dir)
                     self._add("library", path, "importable Go package")
 
     def _dockerfile(self, path: str) -> None:
