@@ -1,0 +1,28 @@
+# Robustness corpus: real repositories pinned to exact commits.
+# Repotour must tour every one of them without crashing. Run by
+# benchmarks/corpus.py in the Corpus workflow (weekly and on demand).
+#
+# Coverage: the three graph languages, a pnpm monorepo, heavy vendored code
+# (pip), heavy migrations (NetBox), a large codebase (Django), a repository
+# with no supported language (ripgrep), and one shallow clone (click).
+repositories:
+  - {name: psf/requests, commit: 3c7baaa05ab4aa49cc819ce3a819d260de19c157}
+  - {name: pallets/click, commit: 8abb77a8432e03ed14a95f972b44f905279415a7, shallow: true}
+  - {name: fastapi/fastapi, commit: 8f9f47de69982705d96e4165a9f03c6537e8c9fe}
+  - {name: encode/httpx, commit: b5addb64f0161ff6bfe94c124ef76f6a1fba5254}
+  - {name: pypa/pip, commit: 4b71f36fb4dfbc87ce65ac4710eeccf81d379f55}
+  - {name: netbox-community/netbox, commit: 40e422c84d63192d4646e77fd506e6fde48c4030}
+  - {name: django/django, commit: a1f2b45ce5a327f42437bdb620a817839d0bd067}
+  - {name: expressjs/express, commit: 43fca52d28a422c8be48fd489cbd4f2d6152bab6}
+  - {name: axios/axios, commit: a81d62a22e4b291a05d5b087a89fcc9d16075e83}
+  - {name: lodash/lodash, commit: 2b5e6f7399a7b48005140b5d5c6bc6c0e62919a8}
+  - {name: chalk/chalk, commit: 72110019e147683f60e13fa0ff5c14a0c27cd9fe}
+  - {name: vuejs/core, commit: 8b479a89445868d474f17e2d837765e7c9ece5e4}
+  - {name: prettier/prettier, commit: b09dd90022c875f3089f19f37724da6377e52b7f}
+  - {name: colinhacks/zod, commit: 19c40d2072288b4cafec851e9d056a72a88e5973}
+  - {name: junegunn/fzf, commit: c7bf2b8eea25952dd257a466c0afa72faae206fb}
+  - {name: spf13/cobra, commit: adbc8813901bba65827259daa8e22ff94ec1f30e}
+  - {name: gin-gonic/gin, commit: 0f09c3a9b4626d9fe9979cf4d0521d6ae32ab646}
+  - {name: caddyserver/caddy, commit: 9b07062e9b0452b4e1fa9e7fec0a4c6d2d175e89}
+  - {name: charmbracelet/bubbletea, commit: 67b4c7a8a2b34a0b1ce15261b0c705bc7e1a04b7}
+  - {name: BurntSushi/ripgrep, commit: 91f5d22ef48bde459d90a8c7dbeab416e97d0f2b}

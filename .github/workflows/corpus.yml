@@ -1,0 +1,30 @@
+name: Corpus
+
+# Tours 20 real repositories pinned in tests/corpus.yml and fails on any
+# crash. Weekly, on demand, and when the corpus or its runner changes.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 7 * * 1"
+  pull_request:
+    paths:
+      - "tests/corpus.yml"
+      - "benchmarks/corpus.py"
+      - ".github/workflows/corpus.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  corpus:
+    name: corpus (ubuntu-latest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+      - run: uv sync --locked
+      - name: Tour every corpus repository
+        run: uv run python benchmarks/corpus.py --dir "$RUNNER_TEMP/corpus"
