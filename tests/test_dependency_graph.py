@@ -143,12 +143,23 @@ def test_tests_generated_and_vendored_files_are_left_out(tmp_path: Path) -> None
     assert edges(graph) == [("app.py", "lib.py")]
 
 
-def test_unparseable_files_warn_and_are_skipped(tmp_path: Path) -> None:
-    tour = tour_for(tmp_path, {"good.py": "import bad\n", "bad.py": "def broken(:\n"})
+def test_partially_parsed_files_keep_their_imports(tmp_path: Path) -> None:
+    tour = tour_for(
+        tmp_path,
+        {
+            "good.py": "x = 1\n",
+            "bad1.py": "import good\n\ndef broken(:\n",
+            "bad2.py": "import good\n\nclass (:\n",
+        },
+    )
 
     assert tour.dependency_graph is not None
-    assert "bad.py" not in {e.source for e in tour.dependency_graph.edges}
-    assert "Could not parse bad.py; left out of the dependency graph" in tour.warnings
+    edges = {(e.source, e.target) for e in tour.dependency_graph.edges}
+    assert edges == {("bad1.py", "good.py"), ("bad2.py", "good.py")}
+    assert tour.warnings == (
+        "2 Python files had syntax the parser could not fully read; "
+        "their imports were still used: bad1.py, bad2.py",
+    )
 
 
 def test_no_supported_language(tmp_path: Path) -> None:

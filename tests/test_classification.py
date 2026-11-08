@@ -86,10 +86,8 @@ def test_submodules_are_listed_not_entered(snapshot: RepoSnapshot) -> None:
 def test_only_unexpected_binaries_and_oversized_files_warn(messy_root: Path) -> None:
     warnings = build_tour(messy_root).tour.warnings
 
-    assert warnings == (
-        "Skipped binary file: data/blob.dat",
-        "Skipped file larger than 1 MB: src/huge.js",
-    )
+    # data/blob.dat is binary but not code: counted, not warned about.
+    assert warnings == ("Skipped file larger than 1 MB: src/huge.js",)
 
 
 def test_languages_and_size_exclude_generated_and_vendored(messy_root: Path) -> None:
@@ -137,3 +135,16 @@ def test_generated_header_must_be_a_comment(text: bytes, generated: bool) -> Non
     result = classify("src/module.py", text, {}, Config())
 
     assert (result.category == "generated") is generated
+
+
+def test_binary_code_still_warns(tmp_path: Path) -> None:
+    from repotour.config import Config
+    from repotour.scan.classifier import classify
+
+    code = classify("src/odd.py", b"x = 1\x00\x01", {}, Config())
+    translation = classify(
+        "locale/de/LC_MESSAGES/django.mo", b"\xde\x12\x04\x95\x00\x00", {}, Config()
+    )
+
+    assert code.warning == "Skipped binary file: src/odd.py"
+    assert translation.warning is None

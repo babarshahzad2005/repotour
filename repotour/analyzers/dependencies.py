@@ -34,13 +34,14 @@ from repotour.model.tour import (
 from repotour.scan.filetypes import is_peripheral
 
 EXTERNAL_EXAMPLES = 5
+PARTIAL_EXAMPLES = 5
 MAX_LEAVES = 10
 GRAPH_CATEGORIES = ("source",)
 
 
 class DependenciesAnalyzer:
     name = "dependencies"
-    version = 5
+    version = 6
     depends_on: tuple[str, ...] = ("entry_points",)
 
     def run(self, snapshot: RepoSnapshot, inputs: dict[str, AnalyzerResult]) -> AnalyzerResult:
@@ -114,13 +115,27 @@ def _reader(snapshot: RepoSnapshot) -> Callable[[str], str]:
 def _parse_all(
     adapter: LanguageAdapter, paths: list[str], snapshot: RepoSnapshot, warnings: list[str]
 ) -> dict[str, tuple[RawImport, ...]]:
+    """Imports per file. tree-sitter recovers from syntax it does not know, so
+    a partially parsed file keeps the imports it yielded; all such files are
+    reported in one warning rather than one each."""
     parsed: dict[str, tuple[RawImport, ...]] = {}
+    partial: list[str] = []
     for path in paths:
         result = snapshot.parse(adapter, path)
         if result.has_error:
-            warnings.append(f"Could not parse {path}; left out of the dependency graph")
-            continue
+            partial.append(path)
         parsed[path] = result.imports
+    if partial:
+        examples = ", ".join(partial[:PARTIAL_EXAMPLES])
+        more = (
+            f", and {len(partial) - PARTIAL_EXAMPLES} more"
+            if len(partial) > PARTIAL_EXAMPLES
+            else ""
+        )
+        warnings.append(
+            f"{len(partial)} {adapter.name} file{'' if len(partial) == 1 else 's'} had syntax "
+            f"the parser could not fully read; their imports were still used: {examples}{more}"
+        )
     return parsed
 
 

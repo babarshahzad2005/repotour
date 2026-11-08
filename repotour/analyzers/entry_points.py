@@ -39,7 +39,7 @@ class _Draft:
 
 class EntryPointsAnalyzer:
     name = "entry_points"
-    version = 2
+    version = 3
     depends_on: tuple[str, ...] = ()
 
     def run(self, snapshot: RepoSnapshot, inputs: dict[str, AnalyzerResult]) -> AnalyzerResult:
@@ -61,9 +61,7 @@ class EntryPointsAnalyzer:
             parsed = {}
             for path in paths:
                 result = snapshot.parse(adapter, path)
-                if result.has_error:
-                    continue
-                parsed[path] = result
+                parsed[path] = result  # partially parsed files still yield their patterns
                 for entry in result.entries:
                     add(
                         path,
