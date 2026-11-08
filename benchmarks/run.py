@@ -29,6 +29,7 @@ class Benchmark:
     url: str
     commit: str
     target_seconds: float
+    gate: bool = True  # False: a stretch target, reported but never failing
 
 
 BENCHMARKS = (
@@ -44,6 +45,19 @@ BENCHMARKS = (
         commit="c7bf2b8eea25952dd257a466c0afa72faae206fb",
         target_seconds=10.0,
     ),
+    Benchmark(
+        name="golang/go go1.27.3",
+        url="https://github.com/golang/go.git",
+        commit="2aae1000ea1d4b28923b96db28acf4e3b99d6aff",
+        target_seconds=120.0,
+    ),
+    Benchmark(
+        name="kubernetes/kubernetes v1.37.2",
+        url="https://github.com/kubernetes/kubernetes.git",
+        commit="c50e5395f1ae2d4a2c05f28fdcc38c0916cc1a32",
+        target_seconds=120.0,
+        gate=False,
+    ),
 )
 
 
@@ -58,7 +72,7 @@ class Result:
 
     @property
     def passed(self) -> bool:
-        return self.median < self.benchmark.target_seconds
+        return not self.benchmark.gate or self.median < self.benchmark.target_seconds
 
 
 def main() -> int:
@@ -113,7 +127,12 @@ def _table(results: list[Result]) -> str:
     ]
     for r in results:
         runs = ", ".join(f"{t:.2f}s" for t in r.timings)
-        verdict = "pass" if r.passed else "FAIL"
+        met = r.median < r.benchmark.target_seconds
+        verdict = (
+            ("pass" if met else "FAIL")
+            if r.benchmark.gate
+            else ("stretch: met" if met else "stretch: not met")
+        )
         lines.append(
             f"| {r.benchmark.name} | `{r.benchmark.commit[:12]}` | {r.median:.2f}s | {runs} "
             f"| < {r.benchmark.target_seconds:.0f}s | {verdict} |"
