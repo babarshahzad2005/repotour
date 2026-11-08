@@ -342,3 +342,51 @@ def history_showcase(parent: Path) -> FixtureRepo:
         "Polish w3", {"web/w3.py": "w = 33\n"}, author=LINUS, date="2024-12-01T10:00:00+00:00"
     )
     return repo
+
+
+def graph_showcase(parent: Path) -> FixtureRepo:
+    """Python, JavaScript/TypeScript, and Go together: the M3 acceptance fixture."""
+    repo = FixtureRepo.create(parent, "graph-showcase")
+    repo.commit(
+        "Start the polyglot shop",
+        {
+            ".repotour.yml": "version: 1\nthresholds:\n  graph_max_nodes: 8\n",
+            "pyproject.toml": (
+                '[project]\nname = "shop"\n\n[project.scripts]\nshop = "shop.cli:main"\n'
+            ),
+            "shop/__init__.py": '"""The shop package."""\n',
+            "shop/cli.py": (
+                "import typer\n\nfrom shop import orders, report\n\napp = typer.Typer()\n"
+            ),
+            "shop/orders.py": "from shop import db, pricing\n",
+            "shop/pricing.py": "from shop import db\n",
+            "shop/report.py": "from shop import db\n",
+            "shop/db.py": "import sqlite3\n",
+            "shop/legacy.py": "OLD = True\n",
+            "web/package.json": '{"name": "web", "main": "src/server.ts"}',
+            "web/tsconfig.json": (
+                '{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["src/*"]}}}'
+            ),
+            "web/src/server.ts": "import { routes } from '@/routes';\napp.listen(3000);\n",
+            "web/src/routes.ts": "import { render } from './views';\nexport const routes = [];\n",
+            "web/src/views.tsx": (
+                "import { theme } from './theme';\nexport const render = () => <div />;\n"
+            ),
+            "web/src/theme.ts": "export const theme = {};\n",
+            "service/go.mod": "module example.com/service\n\ngo 1.22\n",
+            "service/cmd/svc/main.go": (
+                'package main\n\nimport "example.com/service/internal/store"\n\n'
+                "func main() { store.Open() }\n"
+            ),
+            "service/internal/store/store.go": "package store\n\nfunc Open() {}\n",
+            "service/internal/store/cache.go": "package store\n\nfunc cache() {}\n",
+        },
+        date="2024-01-01T10:00:00+00:00",
+    )
+    for month in (2, 3, 4):
+        repo.commit(
+            f"Tune orders ({month})",
+            {"shop/orders.py": f"from shop import db, pricing\n\nVERSION = {month}\n"},
+            date=f"2024-{month:02d}-01T10:00:00+00:00",
+        )
+    return repo
