@@ -73,6 +73,17 @@ def language_of(path: str) -> str | None:
     return LANGUAGE_BY_EXTENSION.get(PurePosixPath(path).suffix.lower())
 
 
+PERIPHERAL_DIRS = frozenset(
+    {"examples", "example", "samples", "sample", "demo", "demos", "docs", "doc",
+     "benchmarks", "benchmark", "bench"}
+)  # fmt: skip
+
+
+def is_peripheral(path: str) -> bool:
+    """Example, documentation, and benchmark code: drawn, never recommended."""
+    return any(part in PERIPHERAL_DIRS for part in PurePosixPath(path).parts[:-1])
+
+
 def category_of(path: str, language: str | None) -> Category:
     suffix = PurePosixPath(path).suffix.lower()
     if language is not None:

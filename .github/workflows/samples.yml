@@ -1,12 +1,14 @@
 name: Sample tours
 
 # Generates the published sample tours (Flask, Express, fzf at pinned commits)
-# and uploads them as an artifact for review. Runs on demand and when the
-# sample generator changes.
+# and uploads them as an artifact for review. Runs on demand and whenever
+# product code or the generator changes, so every code change is also checked
+# against three real repositories.
 on:
   workflow_dispatch:
   pull_request:
     paths:
+      - "repotour/**"
       - "benchmarks/samples.py"
       - ".github/workflows/samples.yml"
 

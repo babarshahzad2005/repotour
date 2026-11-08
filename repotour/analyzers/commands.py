@@ -271,13 +271,14 @@ def _first_recipe_line(text: str, offset: int) -> str | None:
         if not line.strip():
             continue
         if line.startswith(("\t", "    ")):
-            return line.strip().lstrip("@")
+            text = line.strip().lstrip("@")
+            return f"{text[:-1].rstrip()} …" if text.endswith("\\") else text
         return None
     return None
 
 
 def _ci_purpose(line: str) -> str | None:
-    if not line or line.startswith(("#", "echo ", "cd ")):
+    if not line or line.startswith(("#", "echo ", "cd ")) or "${{" in line:
         return None
     if _CI_INSTALL.search(line):
         return "install"

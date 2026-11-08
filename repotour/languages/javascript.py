@@ -73,7 +73,7 @@ class JavaScriptIndex:
 
 class JavaScriptAdapter:
     name = "JavaScript/TypeScript"
-    version = 1
+    version = 2
 
     def handles(self, path: str) -> bool:
         return path.endswith(EXTENSIONS)
@@ -192,6 +192,9 @@ class JavaScriptAdapter:
                     fields.append(("public surface", f"package {key}", key, data[key]))
             for target in _export_targets(data.get("exports")):
                 fields.append(("public surface", "package exports", "exports", target))
+            if not fields and not data.get("private"):
+                # Without "main" or "exports", Node loads index.js.
+                fields.append(("public surface", "package main", "main", "index.js"))
             bins = data.get("bin")
             if isinstance(bins, str):
                 bins = {str(data.get("name", "bin")): bins}
@@ -224,8 +227,10 @@ def _language_for(path: str) -> Language:
 
 def _file(base: str, index: JavaScriptIndex) -> str | None:
     base = base.removeprefix("./")
-    if base.startswith("..") or not base or base == ".":
+    if base.startswith(".."):
         return None
+    if base in ("", "."):
+        return next((f"index{e}" for e in _RESOLVE_ORDER if f"index{e}" in index.paths), None)
     if base in index.paths:
         return base
     stem, suffix = posixpath.splitext(base)
