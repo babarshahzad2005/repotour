@@ -28,3 +28,8 @@ jobs:
       - run: uv sync --locked
       - name: Tour every corpus repository
         run: uv run python benchmarks/corpus.py --dir "$RUNNER_TEMP/corpus"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: corpus-tours
+          path: ${{ runner.temp }}/corpus/tours/*.md
