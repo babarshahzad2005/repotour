@@ -8,8 +8,8 @@ are parsed again; a moved but unchanged file is never re-parsed.
 from __future__ import annotations
 
 import json
-from pathlib import PurePosixPath
 
+from repotour import repopath
 from repotour.cache.store import CacheStore
 from repotour.languages.base import LanguageAdapter, ParseResult
 from repotour.model.serde import from_data, to_data
@@ -26,7 +26,7 @@ class ParseCache:
     def parse(self, adapter: LanguageAdapter, path: str) -> ParseResult:
         content_hash = self._hashes[path]
         # The extension is part of the key: one language may use several grammars.
-        language = f"{adapter.name}{PurePosixPath(path).suffix}"
+        language = f"{adapter.name}{repopath.suffix(path)}"
         key = (language, adapter.version, content_hash)
         if key in self._memo:
             return self._memo[key]
