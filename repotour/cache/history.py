@@ -54,7 +54,8 @@ def _encode(records: tuple[CommitRecord, ...]) -> bytes:
         for r in records
     ]  # fmt: skip
     raw = json.dumps(rows, separators=(",", ":"))
-    return zlib.compress(raw.encode("utf-8"), level=6)
+    # Level 1: written on every run with new commits, so speed beats size here.
+    return zlib.compress(raw.encode("utf-8"), level=1)
 
 
 def _decode(payload: bytes) -> tuple[CommitRecord, ...]:
