@@ -190,7 +190,7 @@ Rules:
 
 ## Flow 6: Optional LLM summaries
 
-Runs only with `--summaries`. The endpoint (`base_url`) and model come from config and default to local Ollama; `REPOTOUR_LLM_API_KEY` is sent only if set.
+Runs only with `--summaries`. The provider preset (default `groq`), model, and optional `base_url` come from config. The API key is read from `REPOTOUR_LLM_API_KEY`, else the preset's own variable (`GROQ_API_KEY`, `OPENROUTER_API_KEY`); local Ollama needs none.
 
 ```mermaid
 sequenceDiagram
@@ -223,6 +223,7 @@ Rules:
 - Summaries are labeled as AI-generated in the output.
 - Before sending, the CLI prints to stderr the files it will send and the endpoint and model. No interactive prompt.
 - An unreachable endpoint (for example, Ollama not running) is a warning; the tour still renders.
+- A rate-limit response (HTTP 429) is retried after the `Retry-After` delay, within a bounded total wait; after that the remaining files are left without summaries and one warning says so.
 - A missing API key with `--summaries` is a warning, not a fatal error; the tour still renders.
 
 ## Flow 7: GitHub Action on release
