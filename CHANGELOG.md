@@ -6,8 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-15
+
+First stable release (M4): HTML and JSON output, AI summaries, the GitHub Action, and PyPI packages. Every quality, performance, and robustness target in the plan is met.
+
 ### Added
 
+- Published on PyPI: `pip install repotour`. Releases are built once, smoke-tested on Linux, macOS, and Windows, and published with trusted publishing.
+- README with sample tours, benchmarks and their method, Action setup, and how AI summaries handle your code. The Flask, Express, and fzf sample tours are regenerated with 1.0.0 (reading orders unchanged since review).
 - GitHub Action: on each release (or on demand) it regenerates the tour and opens or updates one "Update codebase tour" pull request, or none if nothing changed. It caches the analysis between runs, refuses shallow clones with a clear message, and turns on AI summaries when given an `llm-api-key` secret. See `docs/action.md`.
 - Summaries handle free-tier rate limits: a "too many requests" answer is waited out as the provider asks, up to 5 minutes per run, then the remaining files are skipped with one warning.
 - `--summaries` adds a short AI-written paragraph about each key file (reading order first, then core modules, at most 15), in a section clearly labelled as AI-generated, in Markdown, HTML, and JSON. Providers are presets in `.repotour.yml`: Groq (default), OpenRouter, Ollama, or any OpenAI-compatible endpoint; each user brings their own key from the environment. Repotour prints what it will send and where before sending, caches summaries by file content and model, and turns every failure into a warning. Without the flag it never uses the network. See `docs/configuration.md`.
@@ -17,7 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
-- Re-running after new commits is much faster on large repositories: cached history is stored in a compact format and read without generic type resolution (decoding golang/go's 68,000 commits went from about 50 seconds to under 2). Existing caches are rebuilt once.
+- Re-running after a release is much faster on large repositories: golang/go went from 29 s to 4.8 s, and its first run from 59 s to 45 s. Cached history uses a compact format and is decoded without generic type resolution, renames are followed once per tour, and hot paths handle repository paths as plain strings. Existing caches are rebuilt once.
+- The project is marked Production/Stable.
 
 ## [0.3.0] - 2026-11-08
 
@@ -94,7 +101,8 @@ First milestone (M1): the CLI skeleton and the overview section.
 - Missing basics: the overview flags a missing README, tests, contributing guide, license, or CI configuration, saying what was looked for.
 - Contributor documentation, code of conduct, security policy, and issue and pull request templates.
 
-[Unreleased]: https://github.com/babarshahzad2005/repotour/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/babarshahzad2005/repotour/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/babarshahzad2005/repotour/compare/v0.3.0...v1.0.0
 [0.3.0]: https://github.com/babarshahzad2005/repotour/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/babarshahzad2005/repotour/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/babarshahzad2005/repotour/releases/tag/v0.1.0
