@@ -11,7 +11,7 @@ Companion to `vision.md`. This describes how Repotour is built: components, boun
 - **Parsing:** tree-sitter (`py-tree-sitter` plus grammars for Python, JavaScript/TypeScript, Go)
 - **Templates:** Jinja2 for Markdown and HTML output
 - **Cache:** SQLite file in `<git common dir>/repotour-cache/` (safe to delete; see `docs/adr/0004`)
-- **LLM summaries:** one adapter for any OpenAI-compatible chat API (Ollama, LM Studio, llama.cpp, Groq, OpenRouter, Gemini, OpenAI, …), installed as an optional extra (`pip install repotour[llm]`); default is local Ollama at `http://localhost:11434/v1` with model `qwen2.5-coder:3b`, so nothing leaves the machine unless configured
+- **LLM summaries:** one adapter for any OpenAI-compatible chat API, installed as an optional extra (`pip install repotour[llm]`). `summaries.provider` picks a preset: `groq` (default; free tier, nothing runs locally), `openrouter`, `ollama` (local, no key), or `custom` (any `base_url`, such as LM Studio or llama.cpp). Off unless `--summaries` is given, and each user brings their own key
 - **Tooling:** uv, ruff, mypy --strict; official pinned tree-sitter grammar wheels; own deterministic PageRank (no networkx)
 - **Tests:** pytest, with fixture repos built by scripts so tests never depend on real-world repos
 
@@ -156,7 +156,8 @@ repotour [PATH]
   --out FILE              output path (default: TOUR.md or TOUR.html)
   --since DURATION        hotspot window as <n><d|w|m|y>, e.g. 6m; 1m = 30 days;
                           measured back from HEAD's commit date (default from config, else 6m)
-  --summaries             enable LLM summaries (endpoint and model from config; REPOTOUR_LLM_API_KEY only if the endpoint needs one)
+  --summaries             enable LLM summaries (provider and model from config; key from
+                          REPOTOUR_LLM_API_KEY or the provider's own variable, e.g. GROQ_API_KEY)
   --full-graph            render the module-level graph instead of collapsing it
   --no-cache              ignore and do not write the cache
   --json FILE             also write the raw Tour model as JSON
