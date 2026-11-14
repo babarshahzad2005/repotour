@@ -12,7 +12,8 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from pathlib import PurePosixPath
+
+from repotour import repopath
 
 ROOT_GROUP = "(root)"
 
@@ -35,7 +36,7 @@ def collapse(
 ) -> Collapsed:
     if len(nodes) <= max_nodes:
         return _group(nodes, edges, lambda n: n, depth=0)
-    deepest = max((len(PurePosixPath(n).parts) - 1 for n in nodes), default=0)
+    deepest = max((n.count("/") for n in nodes), default=0)
     for depth in range(max(deepest, 1), 0, -1):
         result = _group(nodes, edges, lambda n, d=depth: _directory(n, d), depth=depth)  # type: ignore[misc]
         if len(result.nodes) <= max_nodes:
@@ -71,5 +72,5 @@ def _keep_top(result: Collapsed, ranks: dict[str, float], max_nodes: int) -> Col
 
 
 def _directory(path: str, depth: int) -> str:
-    parts = PurePosixPath(path).parts[:-1]
+    parts = repopath.directories(path)
     return "/".join(parts[:depth]) if parts else ROOT_GROUP

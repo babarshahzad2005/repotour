@@ -14,11 +14,11 @@ import re
 from collections import defaultdict
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from pathlib import PurePosixPath
 
 import tree_sitter_go
 from tree_sitter import Language, Node, Parser, Query, QueryCursor
 
+from repotour import repopath
 from repotour.languages.base import DeclaredEntry, ParseResult, RawEntry, RawImport
 from repotour.model.tour import Evidence
 
@@ -82,7 +82,7 @@ class GoAdapter:
     ) -> GoIndex:
         modules = []
         for path in all_paths:
-            if PurePosixPath(path).name == "go.mod" and "vendor/" not in path:
+            if repopath.name(path) == "go.mod" and "vendor/" not in path:
                 match = _MODULE.search(read(path))
                 if match:
                     modules.append((match.group(1), _parent(path)))
@@ -144,7 +144,7 @@ class GoAdapter:
 
 
 def _representative(directory: str, files: list[str], sizes: dict[str, int]) -> str:
-    named = f"{directory}/{PurePosixPath(directory).name}.go" if directory else None
+    named = f"{directory}/{repopath.name(directory)}.go" if directory else None
     if named in files:
         return named
     doc = f"{directory}/doc.go" if directory else "doc.go"
@@ -154,7 +154,7 @@ def _representative(directory: str, files: list[str], sizes: dict[str, int]) -> 
 
 
 def _parent(path: str) -> str:
-    parent = str(PurePosixPath(path).parent)
+    parent = repopath.parent(path)
     return "" if parent == "." else parent
 
 

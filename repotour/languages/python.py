@@ -17,6 +17,7 @@ from pathlib import PurePosixPath
 import tree_sitter_python
 from tree_sitter import Language, Node, Parser, Query, QueryCursor
 
+from repotour import repopath
 from repotour.languages.base import DeclaredEntry, ParseResult, RawEntry, RawImport
 from repotour.model.tour import Evidence
 
@@ -111,9 +112,9 @@ class PythonAdapter:
         declared.extend(
             _main_module_entry(path, index)
             for path in paths
-            if PurePosixPath(path).name == "__main__.py"
+            if repopath.name(path) == "__main__.py"
         )
-        for manifest in sorted(p for p in all_paths if PurePosixPath(p).name == "pyproject.toml"):
+        for manifest in sorted(p for p in all_paths if repopath.name(p) == "pyproject.toml"):
             declared.extend(_console_scripts(manifest, read(manifest), index))
         return declared
 
@@ -194,7 +195,7 @@ def _module_name(path: str, root: str) -> str | None:
 
 
 def _parent(path: str) -> str:
-    parent = str(PurePosixPath(path).parent)
+    parent = repopath.parent(path)
     return "" if parent == "." else parent
 
 
