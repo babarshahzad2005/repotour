@@ -301,7 +301,7 @@
       "config_hash": "7b708ea7d9d85490f8bffe00de970df2e2cdebe43de7f3f5e4f3fc1ff9e5c9bb",
       "head_commit": "fefaf6098dec898264ad4dfd02358d7d9f4be01b",
       "repo_name": "graph-showcase",
-      "tool_version": "0.3.0"
+      "tool_version": "1.0.0"
     },
     "overview": {
       "commands": [],

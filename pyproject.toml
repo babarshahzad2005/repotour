@@ -1,6 +1,6 @@
 [project]
 name = "repotour"
-version = "0.3.0"
+version = "1.0.0"
 description = "Generate a codebase tour for new contributors: where to start, what matters, and who to ask."
 readme = "README.md"
 license = "MIT"
@@ -9,7 +9,7 @@ authors = [{ name = "M. Babar Shahzad", email = "babarshahzad2005@gmail.com" }]
 requires-python = ">=3.11"
 keywords = ["git", "onboarding", "codebase", "documentation", "cli"]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
