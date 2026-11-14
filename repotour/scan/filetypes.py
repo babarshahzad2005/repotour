@@ -6,8 +6,7 @@ breakdown. Markup, data and config formats are categories, not languages.
 
 from __future__ import annotations
 
-from pathlib import PurePosixPath
-
+from repotour import repopath
 from repotour.model.snapshot import Category
 
 LANGUAGE_BY_EXTENSION: dict[str, str] = {
@@ -70,7 +69,7 @@ CONFIG_EXTENSIONS = frozenset(
 
 
 def language_of(path: str) -> str | None:
-    return LANGUAGE_BY_EXTENSION.get(PurePosixPath(path).suffix.lower())
+    return LANGUAGE_BY_EXTENSION.get(repopath.suffix(path).lower())
 
 
 PERIPHERAL_DIRS = frozenset(
@@ -81,11 +80,11 @@ PERIPHERAL_DIRS = frozenset(
 
 def is_peripheral(path: str) -> bool:
     """Example, documentation, and benchmark code: drawn, never recommended."""
-    return any(part in PERIPHERAL_DIRS for part in PurePosixPath(path).parts[:-1])
+    return any(part in PERIPHERAL_DIRS for part in repopath.directories(path))
 
 
 def category_of(path: str, language: str | None) -> Category:
-    suffix = PurePosixPath(path).suffix.lower()
+    suffix = repopath.suffix(path).lower()
     if language is not None:
         return "source"
     if suffix in DOCS_EXTENSIONS:
