@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 from repotour.analyzers.base import AnalyzerResult
 from repotour.analyzers.bulk import find_bulk
 from repotour.config import describe_duration, duration_days
-from repotour.model.history import CommitRecord, follow_renames
+from repotour.model.history import CommitRecord
 from repotour.model.serde import to_data
 from repotour.model.snapshot import RepoSnapshot
 from repotour.model.tour import BulkCommits, Evidence, Hotspot, HotspotsSection
@@ -33,7 +33,7 @@ class HistoryAnalyzer:
         counted = {f.path for f in snapshot.files if not f.is_excluded}
         # Renames are followed through bulk commits too (a mass move is bulk),
         # so filter bulk commits only after paths are resolved.
-        history = follow_renames(snapshot.history())
+        history = snapshot.followed_history()
         bulk = find_bulk(snapshot, history)
 
         touches: dict[str, list[CommitRecord]] = defaultdict(list)
