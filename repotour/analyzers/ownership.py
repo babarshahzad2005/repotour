@@ -11,12 +11,11 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from pathlib import PurePosixPath
 
 from repotour.analyzers.base import AnalyzerResult
 from repotour.analyzers.bulk import find_bulk
 from repotour.config import Config, describe_duration, duration_days
-from repotour.model.history import CommitRecord, follow_renames
+from repotour.model.history import CommitRecord
 from repotour.model.serde import to_data
 from repotour.model.snapshot import RepoSnapshot
 from repotour.model.tour import (
@@ -62,7 +61,7 @@ class OwnershipAnalyzer:
         config = snapshot.config
         directories = _eligible_directories(snapshot)
         counted = {f.path for f in snapshot.files if not f.is_excluded}
-        history = follow_renames(snapshot.history())
+        history = snapshot.followed_history()
         bulk = find_bulk(snapshot, history)
 
         for commit in history:  # newest first
@@ -127,7 +126,7 @@ def _eligible_directories(snapshot: RepoSnapshot) -> dict[str, _Directory]:
 
 
 def _ancestors(path: str) -> list[str]:
-    parts = PurePosixPath(path).parts[:-1]
+    parts = path.split("/")[:-1]
     return ["/".join(parts[: i + 1]) for i in range(len(parts))]
 
 

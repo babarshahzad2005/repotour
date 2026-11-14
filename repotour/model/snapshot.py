@@ -9,7 +9,7 @@ from types import MappingProxyType
 from typing import Any, Literal
 
 from repotour.config import Config
-from repotour.model.history import CommitRecord
+from repotour.model.history import CommitRecord, follow_renames
 
 Category = Literal["source", "test", "generated", "vendored", "config", "docs", "other"]
 
@@ -46,6 +46,7 @@ class RepoSnapshot:
     )
     # (adapter, path) -> ParseResult; shared and cached. None: parse directly.
     parse_source: Callable[[Any, str], Any] | None = field(default=None, compare=False, repr=False)
+    _memo: dict[str, Any] = field(default_factory=dict, init=False, compare=False, repr=False)
 
     def read_bytes(self, path: str) -> bytes:
         """Committed content of a tracked file at `head_commit`."""
@@ -56,6 +57,16 @@ class RepoSnapshot:
         if self.parse_source is None:
             return adapter.parse(self.read_bytes(path), path)
         return self.parse_source(adapter, path)
+
+    def followed_history(self) -> tuple[CommitRecord, ...]:
+        """History with every path rewritten to the file's path at HEAD.
+
+        Computed once per snapshot and shared by the analyzers that need it.
+        """
+        if "followed" not in self._memo:
+            self._memo["followed"] = follow_renames(self.history())
+        followed: tuple[CommitRecord, ...] = self._memo["followed"]
+        return followed
 
     def history(self) -> tuple[CommitRecord, ...]:
         """History reachable from `head_commit`, merges excluded, newest first.

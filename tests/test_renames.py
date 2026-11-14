@@ -3,8 +3,10 @@ from __future__ import annotations
 import itertools
 from pathlib import Path
 
+import pytest
+
 from repotour.git import reader
-from repotour.model.history import follow_renames
+from repotour.model.history import CommitRecord, FileChange, follow_renames
 from repotour.model.tour import HotspotsSection
 from repotour.pipeline import build_tour
 from tests.fixtures.builder import FixtureRepo
@@ -99,3 +101,33 @@ def test_follow_renames_rewrites_paths_to_head(tmp_path: Path) -> None:
     followed = follow_renames(reader.read_history(repo.root, head))
 
     assert [c.path for commit in followed for c in commit.files] == ["b.py", "b.py"]
+
+
+def test_renames_are_followed_once_per_tour(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[int] = []
+    real = follow_renames
+
+    def counting(commits: tuple[CommitRecord, ...]) -> tuple[CommitRecord, ...]:
+        calls.append(len(commits))
+        return real(commits)
+
+    monkeypatch.setattr("repotour.model.snapshot.follow_renames", counting)
+    repo = new_repo(tmp_path)
+    repo.commit("Add", {"a.py": BODY})
+    repo.commit("Move", {"b.py": BODY, "a.py": None})
+
+    tour = build_tour(repo.root, use_cache=False).tour
+
+    assert tour.hotspots is not None
+    assert tour.ownership is not None
+    assert len(calls) == 1
+
+
+def test_follow_renames_keeps_unrenamed_commits_intact() -> None:
+    plain = CommitRecord("a" * 40, "Ada", "a@x", 1, (FileChange("x.py", 1, 0),))
+
+    (followed,) = follow_renames((plain,))
+
+    assert followed == plain
