@@ -17,13 +17,13 @@ import posixpath
 import re
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from pathlib import PurePosixPath
 from typing import Any
 
 import tree_sitter_javascript
 import tree_sitter_typescript
 from tree_sitter import Language, Node, Parser, Query, QueryCursor
 
+from repotour import repopath
 from repotour.languages.base import DeclaredEntry, ParseResult, RawEntry, RawImport
 from repotour.model.tour import Evidence
 
@@ -117,7 +117,7 @@ class JavaScriptAdapter:
         for path in sorted(all_paths):
             if "node_modules/" in path:
                 continue
-            name = PurePosixPath(path).name
+            name = repopath.name(path)
             if name == "tsconfig.json":
                 config = _tsconfig(path, read(path))
                 if config is not None:
@@ -176,7 +176,7 @@ class JavaScriptAdapter:
         index: JavaScriptIndex,
     ) -> list[DeclaredEntry]:
         declared: list[DeclaredEntry] = []
-        for manifest in sorted(p for p in all_paths if PurePosixPath(p).name == "package.json"):
+        for manifest in sorted(p for p in all_paths if repopath.name(p) == "package.json"):
             if "node_modules/" in manifest:
                 continue
             try:
