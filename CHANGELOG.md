@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `--json FILE` also writes the tour model as JSON with a `schema_version`, for tools rather than people. The format is experimental; see `docs/json.md`. It is byte-identical across platforms and, like the tour, never overwrites a file Repotour did not write.
+
 ## [0.3.0] - 2026-11-08
 
 Third milestone (M3): dependency graph, entry points, and the reading order.

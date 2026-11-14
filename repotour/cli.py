@@ -12,8 +12,9 @@ import typer
 
 from repotour.config import CliOverrides
 from repotour.errors import RepotourError
-from repotour.output import write_tour
+from repotour.output import Output, has_marker, write_outputs
 from repotour.pipeline import build_tour
+from repotour.render.json import is_generated_json, render_json
 from repotour.render.markdown import render_markdown
 
 EXIT_STRICT_WARNINGS = 3
@@ -57,6 +58,13 @@ def main(
         bool,
         typer.Option("--no-cache", help="Neither read nor write the analysis cache."),
     ] = False,
+    json_out: Annotated[
+        Path | None,
+        typer.Option(
+            "--json",
+            help="Also write the tour model as JSON to this path (experimental format).",
+        ),
+    ] = None,
 ) -> None:
     try:
         result = build_tour(
@@ -65,13 +73,18 @@ def main(
             use_cache=not no_cache,
         )
         target = out if out is not None else result.root / "TOUR.md"
-        write_tour(target, render_markdown(result.tour), force=force)
+        outputs = [Output(target, render_markdown(result.tour), has_marker)]
+        if json_out is not None:
+            outputs.append(Output(json_out, render_json(result.tour), is_generated_json))
+        write_outputs(outputs, force=force)
     except RepotourError as exc:
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(exc.exit_code) from None
 
     warnings = len(result.tour.warnings)
     typer.echo(f"Wrote {target} ({warnings} warning{'' if warnings == 1 else 's'})")
+    if json_out is not None:
+        typer.echo(f"Wrote {json_out} (experimental JSON)")
     if result.has_uncommitted_changes:
         short = result.tour.meta.head_commit[:7]
         typer.echo(f"Note: uncommitted changes are ignored; the tour describes HEAD ({short}).")

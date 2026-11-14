@@ -21,11 +21,14 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 @pytest.fixture
 def golden(request: pytest.FixtureRequest) -> GoldenCheck:
-    """Compare rendered output with tests/golden/<name>.md, byte for byte."""
+    """Compare rendered output with tests/golden/<name>, byte for byte.
+
+    A name without an extension means a Markdown tour (`<name>.md`).
+    """
     update = bool(request.config.getoption("--update-goldens"))
 
     def check(name: str, actual: str) -> None:
-        path = GOLDEN_DIR / f"{name}.md"
+        path = GOLDEN_DIR / (name if "." in name else f"{name}.md")
         if update:
             path.write_bytes(actual.encode("utf-8"))
             return
