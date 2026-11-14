@@ -5,6 +5,7 @@ This module contains no analysis logic.
 
 from __future__ import annotations
 
+from enum import StrEnum
 from pathlib import Path
 from typing import Annotated
 
@@ -14,10 +15,20 @@ from repotour.config import CliOverrides
 from repotour.errors import RepotourError
 from repotour.output import Output, has_marker, write_outputs
 from repotour.pipeline import build_tour
+from repotour.render.html import render_html
 from repotour.render.json import is_generated_json, render_json
 from repotour.render.markdown import render_markdown
 
 EXIT_STRICT_WARNINGS = 3
+
+
+class Format(StrEnum):
+    md = "md"
+    html = "html"
+
+
+DEFAULT_NAMES = {Format.md: "TOUR.md", Format.html: "TOUR.html"}
+RENDERERS = {Format.md: render_markdown, Format.html: render_html}
 
 app = typer.Typer(
     add_completion=False,
@@ -31,9 +42,16 @@ def main(
         Path,
         typer.Argument(help="Any directory inside the git repository to tour."),
     ] = Path(),
+    output_format: Annotated[
+        Format,
+        typer.Option("--format", help="Output format: Markdown or a self-contained HTML page."),
+    ] = Format.md,
     out: Annotated[
         Path | None,
-        typer.Option("--out", help="Output path. Defaults to TOUR.md at the repository root."),
+        typer.Option(
+            "--out",
+            help="Output path. Defaults to TOUR.md (or TOUR.html) at the repository root.",
+        ),
     ] = None,
     since: Annotated[
         str | None,
@@ -72,8 +90,8 @@ def main(
             CliOverrides(since=since, full_graph=full_graph or None),
             use_cache=not no_cache,
         )
-        target = out if out is not None else result.root / "TOUR.md"
-        outputs = [Output(target, render_markdown(result.tour), has_marker)]
+        target = out if out is not None else result.root / DEFAULT_NAMES[output_format]
+        outputs = [Output(target, RENDERERS[output_format](result.tour), has_marker)]
         if json_out is not None:
             outputs.append(Output(json_out, render_json(result.tour), is_generated_json))
         write_outputs(outputs, force=force)
