@@ -28,7 +28,7 @@ jobs:
       - run: uv sync --locked
       - name: Generate sample tours
         run: uv run python benchmarks/samples.py --dir "$RUNNER_TEMP/samples" --out sample-tours
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sample-tours
           path: sample-tours/*.md
