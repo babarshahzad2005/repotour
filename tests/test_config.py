@@ -51,7 +51,7 @@ thresholds:
 caps:
   hotspots: 20
 summaries:
-  base_url: https://api.groq.com/openai/v1
+  provider: openrouter
   model: llama-3.1-8b-instant
 """,
     )
@@ -69,6 +69,7 @@ summaries:
     assert config.thresholds.bus_factor_share == 0.9
     assert config.thresholds.bus_factor_min_files == 5
     assert config.caps.hotspots == 20
+    assert config.summaries.provider == "openrouter"
     assert config.summaries.model == "llama-3.1-8b-instant"
 
 

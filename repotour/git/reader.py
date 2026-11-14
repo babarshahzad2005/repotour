@@ -238,6 +238,30 @@ def read_blobs(root: Path, oids: list[str]) -> dict[str, bytes]:
     return blobs
 
 
+def read_files(root: Path, commit: str, paths: list[str]) -> dict[str, bytes]:
+    """Contents of files at `commit`, read in one `git cat-file --batch` call.
+
+    Paths that are missing at that commit, or are not blobs, are left out.
+    """
+    if not paths:
+        return {}
+    stdin = "".join(f"{commit}:{path}\n" for path in paths).encode("utf-8")
+    raw = _git_bytes(root, "cat-file", "--batch", stdin=stdin)
+    files: dict[str, bytes] = {}
+    pos = 0
+    for path in paths:
+        header_end = raw.index(b"\n", pos)
+        header = raw[pos:header_end].split(b" ")
+        pos = header_end + 1
+        if header[-1] == b"missing" or len(header) != 3:
+            continue
+        size = int(header[2])
+        if header[1] == b"blob":
+            files[path] = raw[pos : pos + size]
+        pos += size + 1
+    return files
+
+
 def _decode(raw: bytes) -> str:
     return raw.decode("utf-8", "replace")
 

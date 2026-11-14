@@ -101,6 +101,16 @@ No file stands out yet: no entry points, imports, or repeated changes were found
 {% else %}
 _Unavailable: see Warnings._
 {% endif %}
+{% if tour.summaries %}
+
+## Key files, summarized by AI
+
+> These summaries were written by an AI model ({{ tour.summaries | map(attribute="model") | unique | join(", ") }}) from each file's content at this commit. Unlike the rest of the tour, they are not derived from evidence; treat them as a starting point and check the code.
+
+{% for s in tour.summaries %}
+- `{{ s.path }}`: {{ s.text }}
+{% endfor %}
+{% endif %}
 
 ## Entry points
 
