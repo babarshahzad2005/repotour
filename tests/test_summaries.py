@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import threading
+import time
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -22,6 +23,7 @@ from repotour.pipeline import PipelineResult, build_tour
 from repotour.render.html import render_html
 from repotour.render.json import render_json
 from repotour.render.markdown import render_markdown
+from repotour.summarize import provider
 from repotour.summarize.provider import (
     Endpoint,
     HttpChatClient,
@@ -30,7 +32,7 @@ from repotour.summarize.provider import (
     UnreachableError,
     resolve_endpoint,
 )
-from repotour.summarize.summarizer import SummaryOptions
+from repotour.summarize.summarizer import MAX_SUMMARY_CHARS, SummaryOptions
 from tests.fixtures.repos import graph_showcase, minimal
 
 KEY = {"GROQ_API_KEY": "test-key"}
@@ -196,7 +198,7 @@ def test_model_output_is_one_bounded_plain_paragraph(showcase_root: Path) -> Non
 
     assert "\n" not in summary.text
     assert summary.text.startswith("First line. Second line. word")
-    assert len(summary.text) <= 703
+    assert len(summary.text) <= MAX_SUMMARY_CHARS + 3
     assert summary.text.endswith("...")
 
 
@@ -381,6 +383,28 @@ def test_response_without_content_is_an_error(
 
     with pytest.raises(ProviderError, match="no message content"):
         HttpChatClient().complete(endpoint(url), "s", "u")
+
+
+def test_a_slow_answer_fails_only_that_request(monkeypatch: pytest.MonkeyPatch) -> None:
+    class Slow(BaseHTTPRequestHandler):
+        def do_POST(self) -> None:
+            time.sleep(2)
+
+        def log_message(self, *args: Any) -> None:
+            pass
+
+    httpd = HTTPServer(("127.0.0.1", 0), Slow)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    monkeypatch.setattr(provider, "REQUEST_TIMEOUT_SECONDS", 0.3)
+    try:
+        with pytest.raises(ProviderError, match="no answer within") as caught:
+            HttpChatClient().complete(
+                endpoint(f"http://127.0.0.1:{httpd.server_port}/v1"), "s", "u"
+            )
+    finally:
+        httpd.shutdown()
+        httpd.server_close()
+    assert not isinstance(caught.value, UnreachableError)
 
 
 def test_closed_port_is_unreachable() -> None:
