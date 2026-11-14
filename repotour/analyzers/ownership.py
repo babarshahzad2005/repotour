@@ -63,6 +63,8 @@ class OwnershipAnalyzer:
         counted = {f.path for f in snapshot.files if not f.is_excluded}
         history = snapshot.followed_history()
         bulk = find_bulk(snapshot, history)
+        # The eligible directories each file belongs to, computed once per path.
+        owners: dict[str, list[str]] = {}
 
         for commit in history:  # newest first
             if commit.sha in bulk:
@@ -72,9 +74,12 @@ class OwnershipAnalyzer:
                 if change.path not in counted:
                     continue
                 lines = (change.added or 0) + (change.removed or 0)
-                for directory in _ancestors(change.path):
-                    if directory in directories:
-                        touched[directory] += lines
+                within = owners.get(change.path)
+                if within is None:
+                    within = [d for d in _ancestors(change.path) if d in directories]
+                    owners[change.path] = within
+                for directory in within:
+                    touched[directory] += lines
             bot = is_bot(commit.author_name, config)
             for directory, lines in touched.items():
                 state = directories[directory]
