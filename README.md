@@ -10,6 +10,7 @@ Repotour is a CLI that analyzes a git repository and writes a tour for someone s
 - [Architecture](docs/design/architecture.md): components, data contracts, and rules
 - [Flows](docs/design/flows.md): step-by-step behavior and error handling
 - [Configuration](docs/configuration.md): the `.repotour.yml` reference
+- [JSON output](docs/json.md): the experimental `--json` format
 - [Glossary](GLOSSARY.md): the project's vocabulary
 - [Architecture decision records](docs/adr/)
 

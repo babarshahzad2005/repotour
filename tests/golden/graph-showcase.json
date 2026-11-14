@@ -1,0 +1,672 @@
+{
+  "generator": "repotour",
+  "schema_version": 1,
+  "tour": {
+    "dependency_graph": {
+      "core": [
+        {
+          "evidence": [
+            {
+              "detail": "imported by 3 modules; PageRank 1 of 14",
+              "kind": "import",
+              "ref": "shop/orders.py -> shop/db.py"
+            }
+          ],
+          "importers": 3,
+          "path": "shop/db.py",
+          "rank": 1
+        },
+        {
+          "evidence": [
+            {
+              "detail": "imported by 1 module; PageRank 2 of 14",
+              "kind": "import",
+              "ref": "web/src/views.tsx -> web/src/theme.ts"
+            }
+          ],
+          "importers": 1,
+          "path": "web/src/theme.ts",
+          "rank": 2
+        }
+      ],
+      "depth": 3,
+      "edges": [
+        {
+          "count": 1,
+          "evidence": [
+            {
+              "detail": "1 module import, e.g. line 3",
+              "kind": "import",
+              "ref": "service/cmd/svc/main.go -> service/internal/store/store.go"
+            }
+          ],
+          "source": "service/cmd/svc",
+          "target": "service/internal/store"
+        }
+      ],
+      "external": {
+        "count": 2,
+        "evidence": [
+          {
+            "detail": "line 1",
+            "kind": "import",
+            "ref": "shop/db.py -> sqlite3"
+          },
+          {
+            "detail": "line 1",
+            "kind": "import",
+            "ref": "shop/cli.py -> typer"
+          }
+        ],
+        "examples": [
+          "sqlite3",
+          "typer"
+        ]
+      },
+      "imports": 10,
+      "languages": [
+        "Go",
+        "JavaScript/TypeScript",
+        "Python"
+      ],
+      "leaves": [
+        {
+          "evidence": [
+            {
+              "detail": "no module imports it; not an entry point",
+              "kind": "file",
+              "ref": "shop/legacy.py"
+            }
+          ],
+          "path": "shop/legacy.py"
+        }
+      ],
+      "leaves_omitted": 0,
+      "modules": 14,
+      "nodes": [
+        {
+          "id": "service/cmd/svc",
+          "modules": 1
+        },
+        {
+          "id": "service/internal/store",
+          "modules": 2
+        },
+        {
+          "id": "shop",
+          "modules": 7
+        },
+        {
+          "id": "web/src",
+          "modules": 4
+        }
+      ],
+      "omitted": 0
+    },
+    "entry_points": {
+      "entries": [
+        {
+          "description": "Go program (package main)",
+          "evidence": [
+            {
+              "detail": "line 1",
+              "kind": "file",
+              "ref": "service/cmd/svc/main.go"
+            }
+          ],
+          "kind": "execution",
+          "path": "service/cmd/svc/main.go",
+          "pinned": false
+        },
+        {
+          "description": "defines a CLI (Typer); console script `shop`",
+          "evidence": [
+            {
+              "detail": "line 5",
+              "kind": "file",
+              "ref": "shop/cli.py"
+            },
+            {
+              "detail": "[project.scripts] shop = shop.cli:main",
+              "kind": "file",
+              "ref": "pyproject.toml"
+            }
+          ],
+          "kind": "execution",
+          "path": "shop/cli.py",
+          "pinned": false
+        },
+        {
+          "description": "starts a server",
+          "evidence": [
+            {
+              "detail": "line 2",
+              "kind": "file",
+              "ref": "web/src/server.ts"
+            }
+          ],
+          "kind": "execution",
+          "path": "web/src/server.ts",
+          "pinned": false
+        },
+        {
+          "description": "top-level package `shop`",
+          "evidence": [
+            {
+              "detail": "package root",
+              "kind": "file",
+              "ref": "shop/__init__.py"
+            }
+          ],
+          "kind": "public surface",
+          "path": "shop/__init__.py",
+          "pinned": false
+        },
+        {
+          "description": "package main (`web/package.json` \"main\")",
+          "evidence": [
+            {
+              "detail": "\"main\": src/server.ts",
+              "kind": "file",
+              "ref": "web/package.json"
+            }
+          ],
+          "kind": "public surface",
+          "path": "web/src/server.ts",
+          "pinned": false
+        }
+      ],
+      "omitted": 0
+    },
+    "hotspots": {
+      "bulk": null,
+      "end": "2024-04-01",
+      "files": [
+        {
+          "commits": 4,
+          "evidence": [
+            {
+              "detail": "4 commits between 2024-01-01 and 2024-04-01",
+              "kind": "commit_range",
+              "ref": "5b46e9ade95a..fefaf6098dec"
+            }
+          ],
+          "path": "shop/orders.py"
+        },
+        {
+          "commits": 1,
+          "evidence": [
+            {
+              "detail": "1 commit on 2024-01-01",
+              "kind": "commit_range",
+              "ref": "5b46e9ade95a"
+            }
+          ],
+          "path": ".repotour.yml"
+        },
+        {
+          "commits": 1,
+          "evidence": [
+            {
+              "detail": "1 commit on 2024-01-01",
+              "kind": "commit_range",
+              "ref": "5b46e9ade95a"
+            }
+          ],
+          "path": "pyproject.toml"
+        },
+        {
+          "commits": 1,
+          "evidence": [
+            {
+              "detail": "1 commit on 2024-01-01",
+              "kind": "commit_range",
+              "ref": "5b46e9ade95a"
+            }
+          ],
+          "path": "service/cmd/svc/main.go"
+        },
+        {
+          "commits": 1,
+          "evidence": [
+            {
+              "detail": "1 commit on 2024-01-01",
+              "kind": "commit_range",
+              "ref": "5b46e9ade95a"
+            }
+          ],
+          "path": "service/go.mod"
+        },
+        {
+          "commits": 1,
+          "evidence": [
+            {
+              "detail": "1 commit on 2024-01-01",
+              "kind": "commit_range",
+              "ref": "5b46e9ade95a"
+            }
+          ],
+          "path": "service/internal/store/cache.go"
+        },
+        {
+          "commits": 1,
+          "evidence": [
+            {
+              "detail": "1 commit on 2024-01-01",
+              "kind": "commit_range",
+              "ref": "5b46e9ade95a"
+            }
+          ],
+          "path": "service/internal/store/store.go"
+        },
+        {
+          "commits": 1,
+          "evidence": [
+            {
+              "detail": "1 commit on 2024-01-01",
+              "kind": "commit_range",
+              "ref": "5b46e9ade95a"
+            }
+          ],
+          "path": "shop/__init__.py"
+        },
+        {
+          "commits": 1,
+          "evidence": [
+            {
+              "detail": "1 commit on 2024-01-01",
+              "kind": "commit_range",
+              "ref": "5b46e9ade95a"
+            }
+          ],
+          "path": "shop/cli.py"
+        },
+        {
+          "commits": 1,
+          "evidence": [
+            {
+              "detail": "1 commit on 2024-01-01",
+              "kind": "commit_range",
+              "ref": "5b46e9ade95a"
+            }
+          ],
+          "path": "shop/db.py"
+        }
+      ],
+      "since": "6m",
+      "start": "2023-10-04",
+      "window": "6 months"
+    },
+    "meta": {
+      "config_hash": "31c4cd853816afae88e66243f6fabbd76e0fc6eaaaab0f27f44bda0c7b1a9e65",
+      "head_commit": "fefaf6098dec898264ad4dfd02358d7d9f4be01b",
+      "repo_name": "graph-showcase",
+      "tool_version": "0.3.0"
+    },
+    "overview": {
+      "commands": [],
+      "directories": [
+        {
+          "evidence": [
+            {
+              "detail": "file categories",
+              "kind": "file",
+              "ref": "service/"
+            }
+          ],
+          "path": "service",
+          "purpose": "4 files: 3 source (Go), 1 other"
+        },
+        {
+          "evidence": [
+            {
+              "detail": "file categories",
+              "kind": "file",
+              "ref": "shop/"
+            }
+          ],
+          "path": "shop",
+          "purpose": "7 files: 7 source (Python)"
+        },
+        {
+          "evidence": [
+            {
+              "detail": "well-known directory name",
+              "kind": "file",
+              "ref": "web/"
+            }
+          ],
+          "path": "web",
+          "purpose": "Web frontend"
+        }
+      ],
+      "excluded": [],
+      "languages": [
+        {
+          "evidence": [
+            {
+              "detail": null,
+              "kind": "file",
+              "ref": "shop/cli.py"
+            },
+            {
+              "detail": null,
+              "kind": "file",
+              "ref": "shop/orders.py"
+            },
+            {
+              "detail": null,
+              "kind": "file",
+              "ref": "shop/__init__.py"
+            }
+          ],
+          "files": 7,
+          "language": "Python",
+          "lines": 13
+        },
+        {
+          "evidence": [
+            {
+              "detail": null,
+              "kind": "file",
+              "ref": "service/cmd/svc/main.go"
+            },
+            {
+              "detail": null,
+              "kind": "file",
+              "ref": "service/internal/store/cache.go"
+            },
+            {
+              "detail": null,
+              "kind": "file",
+              "ref": "service/internal/store/store.go"
+            }
+          ],
+          "files": 3,
+          "language": "Go",
+          "lines": 11
+        },
+        {
+          "evidence": [
+            {
+              "detail": null,
+              "kind": "file",
+              "ref": "web/src/routes.ts"
+            },
+            {
+              "detail": null,
+              "kind": "file",
+              "ref": "web/src/server.ts"
+            },
+            {
+              "detail": null,
+              "kind": "file",
+              "ref": "web/src/views.tsx"
+            }
+          ],
+          "files": 4,
+          "language": "TypeScript",
+          "lines": 7
+        }
+      ],
+      "missing": [
+        {
+          "evidence": [
+            {
+              "detail": "looked for a README at the repository root",
+              "kind": "file",
+              "ref": "README*"
+            }
+          ],
+          "item": "README"
+        },
+        {
+          "evidence": [
+            {
+              "detail": "looked for any file classified as a test",
+              "kind": "file",
+              "ref": "tests"
+            }
+          ],
+          "item": "tests"
+        },
+        {
+          "evidence": [
+            {
+              "detail": "looked for CONTRIBUTING* at the root, in docs/, or in .github/",
+              "kind": "file",
+              "ref": "CONTRIBUTING*"
+            }
+          ],
+          "item": "contributing guide"
+        },
+        {
+          "evidence": [
+            {
+              "detail": "looked for LICENSE*, LICENCE*, or COPYING* at the repository root",
+              "kind": "file",
+              "ref": "LICENSE*"
+            }
+          ],
+          "item": "license"
+        },
+        {
+          "evidence": [
+            {
+              "detail": "looked for GitHub Actions, GitLab CI, CircleCI, Jenkins, Azure, Travis, Bitbucket, Buildkite, Drone, or AppVeyor configuration",
+              "kind": "file",
+              "ref": ".github/workflows/"
+            }
+          ],
+          "item": "CI configuration"
+        }
+      ],
+      "notes": [],
+      "packages": [
+        {
+          "evidence": [
+            {
+              "detail": null,
+              "kind": "file",
+              "ref": "service/go.mod"
+            }
+          ],
+          "name": "example.com/service",
+          "path": "service"
+        },
+        {
+          "evidence": [
+            {
+              "detail": null,
+              "kind": "file",
+              "ref": "web/package.json"
+            }
+          ],
+          "name": "web",
+          "path": "web"
+        }
+      ],
+      "project_types": [
+        {
+          "evidence": [
+            {
+              "detail": "manifests in 2 directories",
+              "kind": "file",
+              "ref": "service/go.mod"
+            },
+            {
+              "detail": "manifests in 2 directories",
+              "kind": "file",
+              "ref": "web/package.json"
+            }
+          ],
+          "kind": "monorepo"
+        },
+        {
+          "evidence": [
+            {
+              "detail": "[project]",
+              "kind": "file",
+              "ref": "pyproject.toml"
+            },
+            {
+              "detail": "\"main\"",
+              "kind": "file",
+              "ref": "web/package.json"
+            }
+          ],
+          "kind": "library"
+        },
+        {
+          "evidence": [
+            {
+              "detail": "[project.scripts]",
+              "kind": "file",
+              "ref": "pyproject.toml"
+            },
+            {
+              "detail": "package main",
+              "kind": "file",
+              "ref": "service/cmd/svc/main.go"
+            }
+          ],
+          "kind": "CLI"
+        }
+      ],
+      "size": {
+        "evidence": [
+          {
+            "detail": "19 tracked files at this commit, excluding generated and vendored files",
+            "kind": "commit_range",
+            "ref": "fefaf6098dec898264ad4dfd02358d7d9f4be01b"
+          }
+        ],
+        "files": 19,
+        "lines_of_code": 31
+      },
+      "submodules": []
+    },
+    "ownership": {
+      "contact_window": "12 months",
+      "entries": [
+        {
+          "activity": {
+            "evidence": [
+              {
+                "detail": "last change on 2024-04-01",
+                "kind": "commit_range",
+                "ref": "fefaf6098dec"
+              }
+            ],
+            "state": "active"
+          },
+          "authors": [
+            {
+              "commits": 4,
+              "evidence": [
+                {
+                  "detail": "4 commits, 17 lines changed",
+                  "kind": "commit_range",
+                  "ref": "5b46e9ade95a..fefaf6098dec"
+                }
+              ],
+              "lines": 17,
+              "name": "Ada Lovelace",
+              "share": 100
+            }
+          ],
+          "bus_factor": null,
+          "commits": 4,
+          "contacts": [
+            {
+              "evidence": [
+                {
+                  "detail": "last commit to shop/ on 2024-04-01",
+                  "kind": "commit_range",
+                  "ref": "fefaf6098dec"
+                }
+              ],
+              "last_commit": "2024-04-01",
+              "name": "Ada Lovelace"
+            }
+          ],
+          "files": 7,
+          "path": "shop",
+          "total_lines": 17
+        }
+      ]
+    },
+    "reading_order": {
+      "steps": [
+        {
+          "evidence": [
+            {
+              "detail": "line 1",
+              "kind": "file",
+              "ref": "service/cmd/svc/main.go"
+            }
+          ],
+          "path": "service/cmd/svc/main.go",
+          "reason": "entry point: Go program (package main)"
+        },
+        {
+          "evidence": [
+            {
+              "detail": "line 3",
+              "kind": "import",
+              "ref": "service/cmd/svc/main.go -> service/internal/store/store.go"
+            }
+          ],
+          "path": "service/internal/store/store.go",
+          "reason": "imported by service/cmd/svc/main.go; imported by 1 module"
+        },
+        {
+          "evidence": [
+            {
+              "detail": "line 5",
+              "kind": "file",
+              "ref": "shop/cli.py"
+            },
+            {
+              "detail": "[project.scripts] shop = shop.cli:main",
+              "kind": "file",
+              "ref": "pyproject.toml"
+            }
+          ],
+          "path": "shop/cli.py",
+          "reason": "entry point: defines a CLI (Typer); console script `shop`"
+        },
+        {
+          "evidence": [
+            {
+              "detail": "line 3",
+              "kind": "import",
+              "ref": "shop/cli.py -> shop/orders.py"
+            },
+            {
+              "detail": "4 commits between 2024-01-01 and 2024-04-01",
+              "kind": "commit_range",
+              "ref": "5b46e9ade95a..fefaf6098dec"
+            }
+          ],
+          "path": "shop/orders.py",
+          "reason": "imported by shop/cli.py; imported by 1 module; changed 4 times in the last 6 months"
+        },
+        {
+          "evidence": [
+            {
+              "detail": "line 1",
+              "kind": "import",
+              "ref": "shop/orders.py -> shop/db.py"
+            }
+          ],
+          "path": "shop/db.py",
+          "reason": "imported by shop/orders.py; imported by 3 modules"
+        }
+      ]
+    },
+    "summaries": [],
+    "unavailable": [],
+    "warnings": []
+  }
+}
