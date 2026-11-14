@@ -15,4 +15,4 @@ Include what you found, how to reproduce it, and the impact you expect. You can 
 ## Scope notes
 
 - Repotour runs `git` locally and reads repository files. It uses the network only when LLM summaries are explicitly enabled with `--summaries`.
-- With summaries enabled, file contents are sent to the configured endpoint (local Ollama by default). Choosing a remote endpoint is the user's decision; Repotour prints which files and which endpoint it will use before sending.
+- With summaries enabled, the contents of the selected files are sent to the configured provider (Groq by default; local Ollama keeps everything on the machine). Enabling summaries and choosing the provider is the user's decision; Repotour prints which files, which endpoint, and which model it will use before sending. Repotour never ships or stores an API key; it reads one from the environment.
