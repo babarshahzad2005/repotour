@@ -19,7 +19,7 @@ from repotour.model.tour import Evidence
 
 CACHE_DIR_NAME = "repotour-cache"
 CACHE_FILE_NAME = "cache.sqlite3"
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS analyzer_results (
@@ -40,6 +40,13 @@ CREATE TABLE IF NOT EXISTS parse_results (
     version INTEGER NOT NULL,
     payload TEXT NOT NULL,
     PRIMARY KEY (content_hash, language, version)
+);
+CREATE TABLE IF NOT EXISTS summaries (
+    content_hash TEXT NOT NULL,
+    model TEXT NOT NULL,
+    prompt_version INTEGER NOT NULL,
+    text TEXT NOT NULL,
+    PRIMARY KEY (content_hash, model, prompt_version)
 );
 """
 
@@ -128,6 +135,26 @@ class CacheStore:
                 (content_hash, language, version, payload),
             )
 
+    def get_summary(self, content_hash: str, model: str, prompt_version: int) -> str | None:
+        try:
+            row = self._db.execute(
+                "SELECT text FROM summaries "
+                "WHERE content_hash = ? AND model = ? AND prompt_version = ?",
+                (content_hash, model, prompt_version),
+            ).fetchone()
+        except sqlite3.DatabaseError:
+            return None
+        return None if row is None else str(row[0])
+
+    def put_summary(self, content_hash: str, model: str, prompt_version: int, text: str) -> None:
+        """Committed immediately: each summary cost a network call."""
+        with contextlib.suppress(sqlite3.DatabaseError):
+            self._db.execute(
+                "INSERT OR REPLACE INTO summaries VALUES (?, ?, ?, ?)",
+                (content_hash, model, prompt_version, text),
+            )
+            self._db.commit()
+
     def close(self) -> None:
         with contextlib.suppress(sqlite3.DatabaseError):
             self._db.commit()
@@ -149,6 +176,7 @@ class CacheStore:
                 db.execute("DROP TABLE IF EXISTS analyzer_results")
                 db.execute("DROP TABLE IF EXISTS history")
                 db.execute("DROP TABLE IF EXISTS parse_results")
+                db.execute("DROP TABLE IF EXISTS summaries")
                 db.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
             db.executescript(_SCHEMA)
             db.commit()

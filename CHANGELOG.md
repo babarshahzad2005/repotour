@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- `--summaries` adds a short AI-written paragraph about each key file (reading order first, then core modules, at most 15), in a section clearly labelled as AI-generated, in Markdown, HTML, and JSON. Providers are presets in `.repotour.yml`: Groq (default), OpenRouter, Ollama, or any OpenAI-compatible endpoint; each user brings their own key from the environment. Repotour prints what it will send and where before sending, caches summaries by file content and model, and turns every failure into a warning. Without the flag it never uses the network. See `docs/configuration.md`.
 - `--format html` writes one self-contained `TOUR.html` that works offline: the dependency graph is drawn by an embedded, pinned Mermaid bundle (`@mermaid-js/tiny` 12.3.0, checked by hash), it adapts to light and dark mode, and text from the repository is always escaped. The page is built from the Markdown tour, so both formats say the same thing.
 - `--json FILE` also writes the tour model as JSON with a `schema_version`, for tools rather than people. The format is experimental; see `docs/json.md`. It is byte-identical across platforms and, like the tour, never overwrites a file Repotour did not write.
 

@@ -11,7 +11,7 @@ Companion to `vision.md`. This describes how Repotour is built: components, boun
 - **Parsing:** tree-sitter (`py-tree-sitter` plus grammars for Python, JavaScript/TypeScript, Go)
 - **Templates:** Jinja2 for Markdown and HTML output
 - **Cache:** SQLite file in `<git common dir>/repotour-cache/` (safe to delete; see `docs/adr/0004`)
-- **LLM summaries:** one adapter for any OpenAI-compatible chat API, installed as an optional extra (`pip install repotour[llm]`). `summaries.provider` picks a preset: `groq` (default; free tier, nothing runs locally), `openrouter`, `ollama` (local, no key), or `custom` (any `base_url`, such as LM Studio or llama.cpp). Off unless `--summaries` is given, and each user brings their own key
+- **LLM summaries:** one adapter for any OpenAI-compatible chat API, built on the standard library (no extra dependency). `summaries.provider` picks a preset: `groq` (default; free tier, nothing runs locally), `openrouter`, `ollama` (local, no key), or `custom` (any `base_url`, such as LM Studio or llama.cpp). Off unless `--summaries` is given, and each user brings their own key
 - **Tooling:** uv, ruff, mypy --strict; official pinned tree-sitter grammar wheels; own deterministic PageRank (no networkx)
 - **Tests:** pytest, with fixture repos built by scripts so tests never depend on real-world repos
 

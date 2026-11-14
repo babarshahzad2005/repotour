@@ -48,8 +48,9 @@ class Caps:
 
 @dataclass(frozen=True)
 class Summaries:
-    base_url: str = "http://localhost:11434/v1"
-    model: str = "qwen2.5-coder:3b"
+    provider: str = "groq"  # a key of repotour.summarize.provider.PRESETS
+    model: str | None = None  # None: the preset's default
+    base_url: str | None = None  # None: the preset's endpoint
     max_files: int = 15
 
 
@@ -201,6 +202,26 @@ def _check_ranges(config: Config) -> None:
                 raise ConfigError(f"{CONFIG_FILE}: '{where}' must be between 0 and 1")
     if config.summaries.max_files < 1:
         raise ConfigError(f"{CONFIG_FILE}: 'summaries.max_files' must be at least 1")
+    _check_summaries(config.summaries)
+
+
+def _check_summaries(summaries: Summaries) -> None:
+    from repotour.summarize.provider import PRESETS
+
+    if summaries.provider not in PRESETS:
+        raise ConfigError(
+            f"{CONFIG_FILE}: 'summaries.provider' must be one of "
+            f"{', '.join(PRESETS)}; got {summaries.provider!r}"
+        )
+    preset = PRESETS[summaries.provider]
+    if preset.base_url is None and not summaries.base_url:
+        raise ConfigError(
+            f"{CONFIG_FILE}: 'summaries.base_url' is required with provider {summaries.provider!r}"
+        )
+    if preset.model is None and not summaries.model:
+        raise ConfigError(
+            f"{CONFIG_FILE}: 'summaries.model' is required with provider {summaries.provider!r}"
+        )
 
 
 def _join(where: str, key: str) -> str:

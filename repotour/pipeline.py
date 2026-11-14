@@ -42,6 +42,7 @@ from repotour.model.tour import (
     Tour,
 )
 from repotour.scan.scanner import scan
+from repotour.summarize.summarizer import SummaryOptions, summarize
 
 SHALLOW_WARNING = (
     "History truncated: this is a shallow clone, so history-based sections "
@@ -104,8 +105,13 @@ class ResultCache:
 
 
 def build_tour(
-    start: Path, overrides: CliOverrides | None = None, *, use_cache: bool = True
+    start: Path,
+    overrides: CliOverrides | None = None,
+    *,
+    use_cache: bool = True,
+    summaries: SummaryOptions | None = None,
 ) -> PipelineResult:
+    """Build the tour. With `summaries`, key files also get AI summaries."""
     repo = reader.repo_info(start)
     config = load_config(repo.root, overrides)
 
@@ -124,10 +130,26 @@ def build_tour(
     try:
         result_cache = ResultCache(store, repo.head_commit, config.config_hash()) if store else None
         outcome = run_analyzers(snapshot, default_analyzers(), result_cache)
+        tour = _assemble(repo, config, outcome)
+        if summaries is not None:
+            summarized = summarize(tour, repo.root, config.summaries, summaries, store)
+            tour = replace(
+                tour,
+                summaries=summarized.summaries,
+                warnings=tour.warnings + summarized.warnings,
+            )
     finally:
         if store is not None:
             store.close()
+    return PipelineResult(
+        root=repo.root,
+        config=config,
+        tour=tour,
+        has_uncommitted_changes=repo.has_uncommitted_changes,
+    )
 
+
+def _assemble(repo: reader.RepoInfo, config: Config, outcome: AnalysisOutcome) -> Tour:
     meta = Meta(
         repo_name=config.name or repo.root.name,
         head_commit=repo.head_commit,
@@ -140,13 +162,7 @@ def build_tour(
         for name, (field_name, model) in SECTIONS.items()
         if name in outcome.results
     }
-    tour = Tour(meta=meta, unavailable=outcome.unavailable, warnings=warnings, **sections)
-    return PipelineResult(
-        root=repo.root,
-        config=config,
-        tour=tour,
-        has_uncommitted_changes=repo.has_uncommitted_changes,
-    )
+    return Tour(meta=meta, unavailable=outcome.unavailable, warnings=warnings, **sections)
 
 
 def run_analyzers(

@@ -293,6 +293,15 @@ class ReadingOrderSection:
     steps: tuple[ReadingStep, ...] = ()
 
 
+@dataclass(frozen=True, kw_only=True)
+class FileSummary(Claim):
+    """An AI-written paragraph about one key file. Always labelled as such."""
+
+    path: str
+    text: str
+    model: str
+
+
 @dataclass(frozen=True)
 class Tour:
     meta: Meta
@@ -302,7 +311,7 @@ class Tour:
     hotspots: HotspotsSection | None = None
     ownership: OwnershipSection | None = None
     dependency_graph: DependencyGraphSection | None = None
-    summaries: tuple[Claim, ...] = ()
+    summaries: tuple[FileSummary, ...] = ()  # empty unless --summaries
     unavailable: tuple[str, ...] = ()  # sections whose analyzer failed
     warnings: tuple[str, ...] = ()
 
