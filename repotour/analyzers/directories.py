@@ -10,8 +10,8 @@ from __future__ import annotations
 import re
 from collections import Counter
 from dataclasses import dataclass, field
-from pathlib import PurePosixPath
 
+from repotour import repopath
 from repotour.config import CONFIG_FILE
 from repotour.model.snapshot import Category, FileInfo, RepoSnapshot
 from repotour.model.tour import DirectoryPurpose, Evidence, Note
@@ -171,8 +171,7 @@ def _readme(directory: str, snapshot: RepoSnapshot) -> str | None:
     candidates = sorted(
         f.path
         for f in snapshot.files
-        if str(PurePosixPath(f.path).parent) == directory
-        and PurePosixPath(f.path).stem.lower() == "readme"
+        if repopath.parent(f.path) == directory and repopath.stem(f.path).lower() == "readme"
     )
     return candidates[0] if candidates else None
 

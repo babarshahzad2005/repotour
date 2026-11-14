@@ -12,8 +12,8 @@ import re
 import shlex
 import tomllib
 from collections.abc import Callable
-from pathlib import PurePosixPath
 
+from repotour import repopath
 from repotour.languages.base import DeclaredEntry
 from repotour.model.tour import Evidence
 
@@ -23,7 +23,7 @@ _DOCKER_COMMAND = re.compile(r"^\s*(CMD|ENTRYPOINT)\s+(.+?)\s*$", re.MULTILINE |
 def manifest_entries(paths: set[str], read: Callable[[str], str]) -> list[DeclaredEntry]:
     entries: list[DeclaredEntry] = []
     for manifest in sorted(paths):
-        name = PurePosixPath(manifest).name
+        name = repopath.name(manifest)
         base = _parent(manifest)
         if name == "package.json":
             entries.extend(_package_scripts(manifest, base, read(manifest), paths))
@@ -141,5 +141,5 @@ def _split(command: str) -> list[str]:
 
 
 def _parent(path: str) -> str:
-    parent = str(PurePosixPath(path).parent)
+    parent = repopath.parent(path)
     return "" if parent == "." else parent
