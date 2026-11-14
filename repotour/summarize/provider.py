@@ -25,7 +25,7 @@ class Preset:
 
 
 PRESETS: dict[str, Preset] = {
-    "groq": Preset("https://api.groq.com/openai/v1", "llama-3.3-70b-versatile", "GROQ_API_KEY"),
+    "groq": Preset("https://api.groq.com/openai/v1", "qwen/qwen3.8-27b", "GROQ_API_KEY"),
     "openrouter": Preset("https://openrouter.ai/api/v1", None, "OPENROUTER_API_KEY"),
     "ollama": Preset("http://localhost:11434/v1", "qwen2.5-coder:3b", None),
     "custom": Preset(None, None, None),
@@ -46,6 +46,14 @@ class MissingKeyError(Exception):
 
 class ProviderError(Exception):
     """The provider answered with an error, or with something unusable."""
+
+
+class RateLimitedError(ProviderError):
+    """HTTP 429: try again later, after `retry_after` seconds if the provider said."""
+
+    def __init__(self, message: str, retry_after: float | None = None) -> None:
+        super().__init__(message)
+        self.retry_after = retry_after
 
 
 class UnreachableError(ProviderError):
@@ -101,9 +109,17 @@ class HttpChatClient:
             with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT_SECONDS) as response:
                 payload: Any = json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as exc:
-            raise ProviderError(f"HTTP {exc.code} {_error_message(exc)}".rstrip()) from None
-        except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
+            message = f"HTTP {exc.code} {_error_message(exc)}".rstrip()
+            if exc.code == 429:
+                retry_after = _retry_after(exc.headers.get("Retry-After"))
+                raise RateLimitedError(message, retry_after) from None
+            raise ProviderError(message) from None
+        except TimeoutError:
+            raise ProviderError(f"no answer within {REQUEST_TIMEOUT_SECONDS} s") from None
+        except (urllib.error.URLError, ConnectionError) as exc:
             reason = getattr(exc, "reason", exc)
+            if isinstance(reason, TimeoutError):
+                raise ProviderError(f"no answer within {REQUEST_TIMEOUT_SECONDS} s") from None
             raise UnreachableError(f"cannot reach {endpoint.base_url} ({reason})") from None
         except (UnicodeDecodeError, ValueError):
             raise ProviderError("the response was not JSON") from None
@@ -114,6 +130,15 @@ class HttpChatClient:
         if not isinstance(content, str) or not content.strip():
             raise ProviderError("the response was empty")
         return content
+
+
+def _retry_after(value: str | None) -> float | None:
+    """Seconds from a Retry-After header; None for an HTTP date or anything else."""
+    try:
+        seconds = float(value) if value is not None else None
+    except ValueError:
+        return None
+    return seconds if seconds is not None and seconds >= 0 else None
 
 
 def _error_message(exc: urllib.error.HTTPError) -> str:

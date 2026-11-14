@@ -54,14 +54,15 @@ summaries:                    # used only with --summaries
 
 | Provider | Endpoint | Default model | API key variable |
 |---|---|---|---|
-| `groq` (default) | `https://api.groq.com/openai/v1` | `llama-3.3-70b-versatile` | `GROQ_API_KEY` |
+| `groq` (default) | `https://api.groq.com/openai/v1` | `qwen/qwen3.8-27b` | `GROQ_API_KEY` |
 | `openrouter` | `https://openrouter.ai/api/v1` | none: set `model` | `OPENROUTER_API_KEY` |
 | `ollama` | `http://localhost:11434/v1` | `qwen2.5-coder:3b` | none needed |
 | `custom` | set `base_url` | none: set `model` | `REPOTOUR_LLM_API_KEY`, if the endpoint needs one |
 
 - **Your key, your account.** Repotour ships no key. It reads `REPOTOUR_LLM_API_KEY` if set, otherwise the provider's own variable. Set it in your shell or CI secrets, never in `.repotour.yml`. Groq and OpenRouter both offer free tiers; Ollama runs models on your own machine.
-- **What is sent.** Only the selected files (at most `max_files`), each trimmed to about 3,000 tokens. Before anything is sent, Repotour prints the files, the endpoint, and the model to stderr.
+- **What is sent.** Only the selected files (at most `max_files`), each trimmed to about 2,000 tokens. Before anything is sent, Repotour prints the files, the endpoint, and the model to stderr.
 - **Cost.** Summaries are cached by file content, model, and prompt version, so an unchanged file is never sent twice.
+- **Rate limits.** Free tiers limit requests per minute. When the provider answers "too many requests", Repotour waits as long as it asks (10 seconds if it does not say) and retries, up to 5 minutes in total per run. On Groq's free tier (8,000 tokens per minute) a full run of 15 files usually finishes within that. After that, the remaining files are skipped with one warning; run again later, and only those files are sent.
 - **Failures.** A missing key, an error, or an unreachable endpoint becomes a warning; the tour is always written.
 
 Any OpenAI-compatible server works with `custom`, for example LM Studio or llama.cpp:
