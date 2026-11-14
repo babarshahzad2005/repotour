@@ -19,7 +19,7 @@ from repotour.model.tour import Evidence
 
 CACHE_DIR_NAME = "repotour-cache"
 CACHE_FILE_NAME = "cache.sqlite3"
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS analyzer_results (

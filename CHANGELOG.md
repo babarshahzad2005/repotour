@@ -13,6 +13,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `--format html` writes one self-contained `TOUR.html` that works offline: the dependency graph is drawn by an embedded, pinned Mermaid bundle (`@mermaid-js/tiny` 12.3.0, checked by hash), it adapts to light and dark mode, and text from the repository is always escaped. The page is built from the Markdown tour, so both formats say the same thing.
 - `--json FILE` also writes the tour model as JSON with a `schema_version`, for tools rather than people. The format is experimental; see `docs/json.md`. It is byte-identical across platforms and, like the tour, never overwrites a file Repotour did not write.
 
+### Changed
+
+- Re-running after new commits is much faster on large repositories: cached history is stored in a compact format and read without generic type resolution (decoding golang/go's 68,000 commits went from about 50 seconds to under 2). Existing caches are rebuilt once.
+
 ## [0.3.0] - 2026-11-08
 
 Third milestone (M3): dependency graph, entry points, and the reading order.
