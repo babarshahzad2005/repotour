@@ -6,8 +6,8 @@ Each missing item is a claim whose evidence states what was looked for.
 from __future__ import annotations
 
 from collections.abc import Callable
-from pathlib import PurePosixPath
 
+from repotour import repopath
 from repotour.model.snapshot import RepoSnapshot
 from repotour.model.tour import Evidence, MissingBasic
 
@@ -56,16 +56,16 @@ def _at_root(path: str) -> bool:
 
 
 def _stem(path: str) -> str:
-    return PurePosixPath(path).stem.lower()
+    return repopath.stem(path).lower()
 
 
 def _is_contributing(path: str) -> bool:
-    parent = str(PurePosixPath(path).parent)
+    parent = repopath.parent(path)
     return parent in (".", "docs", ".github") and _stem(path) == "contributing"
 
 
 def _is_license(path: str) -> bool:
-    name = PurePosixPath(path).name.upper()
+    name = repopath.name(path).upper()
     return name.startswith(("LICENSE", "LICENCE", "COPYING"))
 
 

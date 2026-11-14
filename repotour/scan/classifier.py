@@ -18,8 +18,8 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from pathlib import PurePosixPath
 
+from repotour import repopath
 from repotour.config import Config
 from repotour.model.snapshot import Category
 from repotour.scan.filetypes import category_of, language_of
@@ -124,7 +124,7 @@ def classify(path: str, data: bytes, attrs: dict[str, str], config: Config) -> C
 
 
 def _generated_reason(path: str, data: bytes) -> str | None:
-    name = PurePosixPath(path).name
+    name = repopath.name(path)
     if name in LOCKFILES:
         return "lockfile"
     for directory in GENERATED_DIRS:
@@ -144,7 +144,7 @@ def _test_reason(path: str, config: Config) -> str | None:
     for pattern in config.test_patterns:
         if matches(pattern, path):
             return f"config test_patterns: {pattern}"
-    parts = PurePosixPath(path).parts
+    parts = tuple(path.split("/"))
     if any(part in TEST_DIRS for part in parts[:-1]):
         return "test directory"
     for pattern in TEST_NAMES:

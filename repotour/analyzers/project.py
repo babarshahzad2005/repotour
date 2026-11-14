@@ -15,6 +15,7 @@ from typing import Any
 
 import yaml
 
+from repotour import repopath
 from repotour.model.snapshot import RepoSnapshot
 from repotour.model.tour import Evidence, Package, ProjectType
 from repotour.scan.globs import matches_exactly
@@ -63,9 +64,7 @@ class _Detector:
     def run(self) -> Detection:
         package_dirs = self._monorepo_packages()
         packages = tuple(self._package(d) for d in package_dirs)
-        go_module_dirs = sorted(
-            {_parent(p) for p in self.paths if PurePosixPath(p).name == "go.mod"}
-        )
+        go_module_dirs = sorted({_parent(p) for p in self.paths if repopath.name(p) == "go.mod"})
         for directory in ["", *package_dirs]:
             self._detect_in(directory, go_module_dirs)
         types = tuple(
@@ -111,7 +110,7 @@ class _Detector:
             {
                 _parent(p)
                 for p in self.paths
-                if PurePosixPath(p).name in PACKAGE_MANIFESTS and p.count("/") == 1
+                if repopath.name(p) in PACKAGE_MANIFESTS and p.count("/") == 1
             }
         )
         if len(top_level) >= 2:
@@ -124,7 +123,7 @@ class _Detector:
     def _expand(self, patterns: list[str], manifest: str) -> list[str]:
         include = [p for p in patterns if not p.startswith("!")]
         exclude = [p[1:] for p in patterns if p.startswith("!")]
-        dirs = {_parent(p) for p in self.paths if PurePosixPath(p).name == manifest and "/" in p}
+        dirs = {_parent(p) for p in self.paths if repopath.name(p) == manifest and "/" in p}
         return sorted(
             d
             for d in dirs
@@ -147,7 +146,7 @@ class _Detector:
         return directory
 
     def _package_name(self, manifest: str) -> str | None:
-        name = PurePosixPath(manifest).name
+        name = repopath.name(manifest)
         value: Any = None
         if name == "package.json":
             data = self._json(manifest)
@@ -336,7 +335,7 @@ def _strings(value: object) -> list[str]:
 
 
 def _parent(path: str) -> str:
-    parent = str(PurePosixPath(path).parent)
+    parent = repopath.parent(path)
     return "" if parent == "." else parent
 
 
