@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -23,17 +24,23 @@ from repotour.summarize.provider import (
     Endpoint,
     MissingKeyError,
     ProviderError,
+    RateLimitedError,
     UnreachableError,
     resolve_endpoint,
 )
 
-PROMPT_VERSION = 1
-MAX_INPUT_CHARS = 12_000  # about 3,000 tokens: enough to see what a file is for
-MAX_SUMMARY_CHARS = 700
+PROMPT_VERSION = 2
+# About 2,000 tokens: enough to see what a file is for, and small enough that
+# free tiers (Groq: 8,000 tokens per minute) fit several files a minute.
+MAX_INPUT_CHARS = 8_000
+MAX_SUMMARY_CHARS = 900
+DEFAULT_RETRY_SECONDS = 10.0  # when a 429 does not say how long to wait
+MAX_RATE_LIMIT_WAIT_SECONDS = 300.0  # total, per run
+MIN_RETRY_SECONDS = 1.0  # so a Retry-After of 0 cannot spin
 
 SYSTEM_PROMPT = (
     "You help developers who are new to a code repository. Given one source file, "
-    "write a single plain-text paragraph of two to four sentences: what the file is "
+    "write one plain-text paragraph of two to four sentences, under 80 words: what the file is "
     "responsible for, its most important functions or types, and how it fits into the "
     "codebase. Do not use Markdown, lists, headings, or code blocks. Do not guess "
     "beyond what the file shows."
@@ -47,6 +54,7 @@ class SummaryOptions:
     client: ChatClient
     environ: Mapping[str, str]
     notify: Callable[[str], None] = lambda _message: None
+    sleep: Callable[[float], None] = time.sleep
 
 
 @dataclass(frozen=True)
@@ -101,11 +109,29 @@ def summarize(
             f"Sending {len(to_send)} file{'' if len(to_send) == 1 else 's'} to "
             f"{endpoint.base_url} (model {endpoint.model}) for summaries: {', '.join(to_send)}"
         )
-    for index, path in enumerate(to_send):
+    waited = 0.0
+    index = 0
+    while index < len(to_send):
+        path = to_send[index]
         try:
             text = _clean(
                 options.client.complete(endpoint, SYSTEM_PROMPT, _prompt(path, contents[path]))
             )
+        except RateLimitedError as exc:
+            delay = DEFAULT_RETRY_SECONDS if exc.retry_after is None else exc.retry_after
+            delay = max(delay, MIN_RETRY_SECONDS)
+            if waited + delay > MAX_RATE_LIMIT_WAIT_SECONDS:
+                left = len(to_send) - index
+                warnings.append(
+                    f"summaries: stopped by the provider's rate limit ({exc}); {left} "
+                    f"file{'' if left == 1 else 's'} left without a summary. Run again later: "
+                    "finished summaries are cached."
+                )
+                break
+            options.notify(f"Rate limited by the provider; waiting {delay:g}s before retrying")
+            options.sleep(delay)
+            waited += delay
+            continue
         except UnreachableError as exc:
             left = len(to_send) - index
             warnings.append(
@@ -114,8 +140,10 @@ def summarize(
             break
         except ProviderError as exc:
             warnings.append(f"summaries: {path} was not summarized ({exc})")
+            index += 1
             continue
         texts[path] = text
+        index += 1
         if store is not None:
             store.put_summary(hashes[path], endpoint.model, PROMPT_VERSION, text)
 
