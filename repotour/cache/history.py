@@ -18,8 +18,7 @@ from typing import Any
 
 from repotour.cache.store import CacheStore
 from repotour.git import reader
-from repotour.model.history import CommitRecord
-from repotour.model.serde import from_data, to_data
+from repotour.model.history import CommitRecord, FileChange
 
 
 def load_history(root: Path, head: str, store: CacheStore | None) -> tuple[CommitRecord, ...]:
@@ -43,11 +42,24 @@ def canonical(records: tuple[CommitRecord, ...]) -> tuple[CommitRecord, ...]:
     return tuple(sorted(records, key=lambda r: (-r.timestamp, r.sha)))
 
 
+# History can hold hundreds of thousands of records, so it has its own compact
+# codec instead of the generic one in `repotour.model.serde`: each commit is
+# [sha, author_name, author_email, timestamp, [[path, added, removed, old_path], ...]].
+
+
 def _encode(records: tuple[CommitRecord, ...]) -> bytes:
-    raw = json.dumps(to_data(records), separators=(",", ":"))
+    rows = [
+        [r.sha, r.author_name, r.author_email, r.timestamp,
+         [[f.path, f.added, f.removed, f.old_path] for f in r.files]]
+        for r in records
+    ]  # fmt: skip
+    raw = json.dumps(rows, separators=(",", ":"))
     return zlib.compress(raw.encode("utf-8"), level=6)
 
 
 def _decode(payload: bytes) -> tuple[CommitRecord, ...]:
-    data: list[Any] = json.loads(zlib.decompress(payload).decode("utf-8"))
-    return tuple(from_data(CommitRecord, item) for item in data)
+    rows: list[Any] = json.loads(zlib.decompress(payload).decode("utf-8"))
+    return tuple(
+        CommitRecord(sha, name, email, timestamp, tuple(FileChange(*f) for f in files))
+        for sha, name, email, timestamp, files in rows
+    )
