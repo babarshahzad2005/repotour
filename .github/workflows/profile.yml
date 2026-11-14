@@ -1,0 +1,32 @@
+name: Profile (temporary)
+
+on:
+  pull_request:
+    paths:
+      - "benchmarks/**"
+      - "repotour/**"
+      - ".github/workflows/profile.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  profile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+      - run: uv sync --locked
+      - name: Clone golang/go
+        run: git clone --quiet --no-checkout https://github.com/golang/go.git "$RUNNER_TEMP/go"
+      - name: Profile an incremental run (go1.27.0 -> go1.27.3)
+        run: |
+          GO="$RUNNER_TEMP/go"
+          git -C "$GO" checkout --quiet --detach 8af21751f066eced273ca3ce49506b366847c623
+          uv run repotour "$GO" --out "$RUNNER_TEMP/a.md" --force
+          git -C "$GO" checkout --quiet --detach 2aae1000ea1d4b28923b96db28acf4e3b99d6aff
+          uv run python -m cProfile -o "$RUNNER_TEMP/incr.prof" -m repotour "$GO" --out "$RUNNER_TEMP/b.md" --force
+          uv run python -c "import pstats,sys; s=pstats.Stats(sys.argv[1]); s.sort_stats('cumulative').print_stats(45); s.sort_stats('tottime').print_stats(25)" "$RUNNER_TEMP/incr.prof"

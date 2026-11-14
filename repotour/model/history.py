@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
@@ -34,10 +34,18 @@ def follow_renames(commits: tuple[CommitRecord, ...]) -> tuple[CommitRecord, ...
     followed = []
     for commit in commits:
         files = []
+        changed = False
         for change in commit.files:
             current = head_path.get(change.path, change.path)
             if change.old_path is not None:
                 head_path[change.old_path] = current
-            files.append(replace(change, path=current, old_path=None))
-        followed.append(replace(commit, files=tuple(files)))
+            if current != change.path or change.old_path is not None:
+                change = FileChange(current, change.added, change.removed)
+                changed = True
+            files.append(change)
+        if changed:
+            commit = CommitRecord(
+                commit.sha, commit.author_name, commit.author_email, commit.timestamp, tuple(files)
+            )
+        followed.append(commit)
     return tuple(followed)
