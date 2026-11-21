@@ -46,7 +46,7 @@ runs:
           exit 1
         fi
 
-    - uses: actions/setup-python@v6
+    - uses: actions/setup-python@v7
       with:
         python-version: ${{ inputs.python-version }}
 
@@ -57,7 +57,7 @@ runs:
       run: python -m pip install --quiet --disable-pip-version-check "$ACTION_PATH"
 
     - name: Restore the analysis cache
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: .git/repotour-cache
         key: repotour-${{ runner.os }}-${{ github.sha }}
